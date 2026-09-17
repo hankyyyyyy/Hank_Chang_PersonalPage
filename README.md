@@ -2,6 +2,10 @@
 
 > 電機工程學系 (Department of Electrical Engineering) | 軟硬體整合 · 嵌入式微控制器 · 現代 Web 開發 · 人工智慧
 
+<p align="center">
+  <img src="assets/profile_preview.png" alt="Hank Chang Profile Preview" width="850">
+</p>
+
 本專案為包含四大核心功能之響應式現代化個人作品集網頁，使用原生純前端技術（HTML5, CSS3, JavaScript ES6+）打造，無需依賴重型框架，啟動快速且具備頂級視覺效果。
 
 ---
