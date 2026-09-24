@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>臺灣即時氣象與 36 小時預報網 | Taiwan Weather Hub</title>
+  <meta name="description" content="全台 22 縣市即時天氣、36 小時三時段預報趨勢、台灣互動向量氣象地圖、空氣品質 AQI 監測與智慧生活氣象指引。">
+  <meta name="keywords" content="台灣天氣, 中央氣象署, 氣象預報, 36小時預報, 空氣品質, 降雨機率, 苗栗天氣, 台北天氣">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌤️</text></svg>">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dynamic">
+  <!-- Dynamic Atmospheric Background -->
+  <div class="sky-canvas" id="skyCanvas">
+    <div class="sky-gradient"></div>
+    <div class="sun-moon-glow" id="sunMoonGlow"></div>
+    <div class="cloud-layer" id="cloudLayer"></div>
+    <div class="rain-canvas-container" id="rainContainer"></div>
+    <div class="stars-layer" id="starsLayer"></div>
+  </div>
+
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="app-header glass-card">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <i class="fa-solid fa-cloud-sun-rain"></i>
+        </div>
+        <div class="brand-text">
+          <h1>TAIWAN WEATHER HUB</h1>
+          <span class="brand-sub">臺灣即時氣象 · 36 小時預報地圖系統</span>
+        </div>
+      </div>
+
+      <!-- Quick Search & Actions -->
+      <div class="header-search-bar">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="countySearchInput" placeholder="搜尋全台縣市或鄉鎮（如：苗栗、板橋）..." autocomplete="off">
+        <button id="clearSearchBtn" class="clear-search-btn" title="清除搜尋"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Global Actions Controls -->
+      <div class="header-controls">
+        <!-- Geolocation Button -->
+        <button id="geoLocateBtn" class="pill-btn" title="自動定位目前所在縣市">
+          <i class="fa-solid fa-location-crosshairs"></i>
+          <span>GPS 定位</span>
+        </button>
+
+        <!-- Refresh Button -->
+        <button id="refreshDataBtn" class="pill-btn" title="重新擷取氣象署最新資料">
+          <i class="fa-solid fa-arrows-rotate" id="refreshIcon"></i>
+          <span>同步資料</span>
+        </button>
+
+        <!-- Sound Ambiance Toggle -->
+        <button id="ambientSoundBtn" class="icon-toggle-btn" title="開啟/關閉環境微氣候音效">
+          <i class="fa-solid fa-volume-xmark" id="soundIcon"></i>
+        </button>
+
+        <!-- Theme Mode Toggle -->
+        <button id="themeToggleBtn" class="icon-toggle-btn" title="切換深色/淺色主題">
+          <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Region Category Filter Tabs -->
+    <nav class="region-nav" aria-label="地區快速導覽">
+      <div class="region-tabs-container">
+        <button class="region-tab active" data-region="all"><i class="fa-solid fa-globe"></i> 全台總覽</button>
+        <button class="region-tab" data-region="north"><i class="fa-solid fa-compass"></i> 北部地區</button>
+        <button class="region-tab" data-region="central"><i class="fa-solid fa-mountain"></i> 中部地區</button>
+        <button class="region-tab" data-region="south"><i class="fa-solid fa-sun"></i> 南部地區</button>
+        <button class="region-tab" data-region="east"><i class="fa-solid fa-water"></i> 東部地區</button>
+        <button class="region-tab" data-region="islands"><i class="fa-solid fa-umbrella-beach"></i> 外島地區</button>
+        <button class="region-tab" data-region="favorites"><i class="fa-solid fa-heart"></i> 我的收藏 (<span id="favCount">0</span>)</button>
+      </div>
+      <div class="sync-time-tag">
+        <i class="fa-regular fa-clock"></i>
+        <span>資料更新：<span id="dataUpdatedTime">載入中...</span></span>
+      </div>
+    </nav>
+
+    <!-- Main Dynamic Content Grid -->
+    <main class="main-content-grid">
+      <!-- LEFT COLUMN: Selected County Hero & Forecast Panels -->
+      <section class="left-forecast-col">
+        <!-- Hero Weather Card -->
+        <div class="hero-weather-card glass-panel" id="heroCard">
+          <div class="hero-card-header">
+            <div class="location-heading">
+              <div class="title-with-badge">
+                <h2 id="currentLocationName">苗栗縣</h2>
+                <span class="region-pill" id="currentRegionTag">中部地區</span>
+                <button class="favorite-toggle-btn" id="favCurrentBtn" title="加入最愛">
+                  <i class="fa-regular fa-heart"></i>
+                </button>
+              </div>
+              <p class="current-date-text" id="currentDateDisplay">2026/09/24 星期四</p>
+            </div>
+
+            <!-- Township Selector -->
+            <div class="township-picker-box">
+              <label for="townshipSelect"><i class="fa-solid fa-map-pin"></i> 鄉鎮預報：</label>
+              <select id="townshipSelect" class="styled-select">
+                <option value="苗栗市">苗栗市</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Hero Main Metrics -->
+          <div class="hero-metric-body">
+            <div class="hero-temp-section">
+              <div class="temp-big-display">
+                <span class="temp-num" id="currentTempNum">29</span>
+                <span class="temp-unit">°C</span>
+              </div>
+              <div class="temp-range-pill">
+                <span class="temp-low"><i class="fa-solid fa-arrow-down"></i> <span id="currentMinTemp">27</span>°</span>
+                <span class="temp-sep">/</span>
+                <span class="temp-high"><i class="fa-solid fa-arrow-up"></i> <span id="currentMaxTemp">31</span>°</span>
+              </div>
+            </div>
+
+            <div class="hero-weather-visual">
+              <div class="weather-icon-stage" id="heroWeatherIcon">
+                <!-- Injected dynamic SVG weather icon -->
+                <i class="fa-solid fa-cloud-sun weather-glyph"></i>
+              </div>
+              <div class="weather-state-desc" id="currentWxDesc">多雲時晴</div>
+              <div class="comfort-badge" id="currentComfortBadge">
+                <i class="fa-solid fa-feather"></i>
+                <span id="currentComfortText">舒適至悶熱</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Vital Badges -->
+          <div class="vital-stats-row">
+            <div class="vital-stat-chip">
+              <i class="fa-solid fa-droplet text-blue"></i>
+              <div class="vital-info">
+                <span class="vital-label">降雨機率</span>
+                <span class="vital-val" id="currentPoP">0%</span>
+              </div>
+            </div>
+            <div class="vital-stat-chip">
+              <i class="fa-solid fa-wind text-teal"></i>
+              <div class="vital-info">
+                <span class="vital-label">風力狀況</span>
+                <span class="vital-val" id="currentWind">2~3 級微風</span>
+              </div>
+            </div>
+            <div class="vital-stat-chip">
+              <i class="fa-solid fa-temperature-half text-amber"></i>
+              <div class="vital-info">
+                <span class="vital-label">體感溫度</span>
+                <span class="vital-val" id="currentFeelTemp">30°C</span>
+              </div>
+            </div>
+            <div class="vital-stat-chip">
+              <i class="fa-solid fa-shield-heart text-rose"></i>
+              <div class="vital-info">
+                <span class="vital-label">生活指數</span>
+                <span class="vital-val" id="currentLifeStatus">適宜外出</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 36-Hour 3-Slot Forecast Section (Matching Image 1: 今日白天 / 今晚明晨 / 明日白天) -->
+        <div class="forecast-36h-container glass-panel">
+          <div class="panel-header-simple">
+            <div class="panel-title-with-icon">
+              <i class="fa-solid fa-timeline text-primary"></i>
+              <h3>今明 36 小時三階段天氣預報</h3>
+            </div>
+            <span class="panel-subtitle">精準掌握晨昏溫差與降雨</span>
+          </div>
+
+          <div class="forecast-slots-grid" id="forecastSlotsGrid">
+            <!-- Slot 1: 今日白天 (12:00~18:00) -->
+            <div class="forecast-slot-card active-now" id="slotCard0">
+              <div class="slot-badge-head">
+                <span class="slot-title" id="slotTitle0">今日白天</span>
+                <span class="slot-time" id="slotTime0">12:00 ~ 18:00</span>
+              </div>
+              <div class="slot-icon-box" id="slotIcon0">
+                <i class="fa-solid fa-cloud-sun"></i>
+              </div>
+              <div class="slot-wx-text" id="slotWx0">多雲時晴</div>
+              <div class="slot-temp-range" id="slotTemp0">27° - 31°</div>
+              <div class="slot-pop-bar">
+                <div class="pop-pill">
+                  <i class="fa-solid fa-umbrella"></i>
+                  <span id="slotPoP0">0%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slot 2: 今晚明晨 (18:00~06:00) -->
+            <div class="forecast-slot-card" id="slotCard1">
+              <div class="slot-badge-head">
+                <span class="slot-title" id="slotTitle1">今晚明晨</span>
+                <span class="slot-time" id="slotTime1">18:00 ~ 06:00</span>
+              </div>
+              <div class="slot-icon-box" id="slotIcon1">
+                <i class="fa-solid fa-moon"></i>
+              </div>
+              <div class="slot-wx-text" id="slotWx1">晴時多雲</div>
+              <div class="slot-temp-range" id="slotTemp1">22° - 27°</div>
+              <div class="slot-pop-bar">
+                <div class="pop-pill">
+                  <i class="fa-solid fa-umbrella"></i>
+                  <span id="slotPoP1">0%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slot 3: 明日白天 (06:00~18:00) -->
+            <div class="forecast-slot-card" id="slotCard2">
+              <div class="slot-badge-head">
+                <span class="slot-title" id="slotTitle2">明日白天</span>
+                <span class="slot-time" id="slotTime2">06:00 ~ 18:00</span>
+              </div>
+              <div class="slot-icon-box" id="slotIcon2">
+                <i class="fa-solid fa-sun"></i>
+              </div>
+              <div class="slot-wx-text" id="slotWx2">多雲晴朗</div>
+              <div class="slot-temp-range" id="slotTemp2">22° - 31°</div>
+              <div class="slot-pop-bar">
+                <div class="pop-pill">
+                  <i class="fa-solid fa-umbrella"></i>
+                  <span id="slotPoP2">10%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Air Quality & Living Advisory Cards -->
+        <div class="twin-cards-row">
+          <!-- Air Quality Card (AQI) -->
+          <div class="sub-panel glass-panel" id="aqiPanel">
+            <div class="panel-mini-header">
+              <div class="mini-title">
+                <i class="fa-solid fa-lungs text-emerald"></i>
+                <h4>空氣品質監測 (AQI)</h4>
+              </div>
+              <span class="station-tag" id="aqiStationName">測站：苗栗</span>
+            </div>
+
+            <div class="aqi-meter-box">
+              <div class="aqi-score-cluster">
+                <div class="aqi-num" id="aqiValue">59</div>
+                <div class="aqi-status-text aqi-status-moderate" id="aqiLevelBadge">普通</div>
+              </div>
+              <div class="aqi-progress-track">
+                <div class="aqi-progress-bar" id="aqiProgressBar" style="width: 42%;"></div>
+              </div>
+              <div class="aqi-scale-labels">
+                <span>0 良好</span>
+                <span>50 普通</span>
+                <span>100 敏感</span>
+                <span>150 不良</span>
+              </div>
+            </div>
+            <div class="aqi-source-footer">
+              <span>資料來源：環境部監測站 (<span id="aqiTime">即時同步</span>)</span>
+            </div>
+          </div>
+
+          <!-- Smart Lifestyle Assistant (AI 穿衣與雨具建議) -->
+          <div class="sub-panel glass-panel" id="lifestylePanel">
+            <div class="panel-mini-header">
+              <div class="mini-title">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber"></i>
+                <h4>智慧生活氣象指引</h4>
+              </div>
+              <span class="station-tag">AI 貼心提醒</span>
+            </div>
+
+            <div class="lifestyle-tips-grid">
+              <div class="tip-card">
+                <i class="fa-solid fa-shirt tip-icon text-indigo"></i>
+                <div class="tip-content">
+                  <span class="tip-name">穿衣建議</span>
+                  <span class="tip-val" id="tipClothes">短袖棉質 + 隨身薄外套</span>
+                </div>
+              </div>
+              <div class="tip-card">
+                <i class="fa-solid fa-umbrella tip-icon text-sky"></i>
+                <div class="tip-content">
+                  <span class="tip-name">雨具攜帶</span>
+                  <span class="tip-val" id="tipUmbrella">降雨機率低，無需雨具</span>
+                </div>
+              </div>
+              <div class="tip-card">
+                <i class="fa-solid fa-sun tip-icon text-orange"></i>
+                <div class="tip-content">
+                  <span class="tip-name">紫外線防護</span>
+                  <span class="tip-val" id="tipUV">中量級 (注意中午防曬)</span>
+                </div>
+              </div>
+              <div class="tip-card">
+                <i class="fa-solid fa-person-running tip-icon text-green"></i>
+                <div class="tip-content">
+                  <span class="tip-name">運動合適度</span>
+                  <span class="tip-val" id="tipActivity">極適宜戶外慢跑散步</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Access Banner / Links -->
+        <div class="quick-nav-pills glass-panel">
+          <button class="nav-shortcut-btn" id="openOverviewModalBtn">
+            <i class="fa-solid fa-table-cells"></i>
+            <span>全台 22 縣市預報總覽</span>
+            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+          </button>
+          <button class="nav-shortcut-btn" id="openRankingModalBtn">
+            <i class="fa-solid fa-fire-flame-curved"></i>
+            <span>今日氣溫最高/最低排行</span>
+            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+          </button>
+          <button class="nav-shortcut-btn" id="openApiDocModalBtn">
+            <i class="fa-solid fa-code"></i>
+            <span>CWA API 資料串接架構</span>
+            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: Interactive Taiwan Vector Weather Map -->
+      <section class="right-map-col">
+        <div class="interactive-map-panel glass-panel">
+          <div class="map-panel-header">
+            <div class="map-title-box">
+              <i class="fa-solid fa-map-location-dot text-primary"></i>
+              <div>
+                <h3>臺灣互動氣象地圖</h3>
+                <p>點擊地圖上任一縣市氣象圖標，立即切換當前觀測</p>
+              </div>
+            </div>
+
+            <!-- Map View Mode Switchers -->
+            <div class="map-mode-pills">
+              <button class="map-mode-btn active" data-mode="icon" title="顯示天氣圖示與氣溫">
+                <i class="fa-solid fa-cloud-sun"></i> 圖示模式
+              </button>
+              <button class="map-mode-btn" data-mode="temp" title="顯示純氣溫數據">
+                <i class="fa-solid fa-temperature-high"></i> 氣溫分佈
+              </button>
+              <button class="map-mode-btn" data-mode="pop" title="顯示降雨機率">
+                <i class="fa-solid fa-umbrella"></i> 降雨機率
+              </button>
+            </div>
+          </div>
+
+          <!-- Taiwan SVG Map Interactive Stage -->
+          <div class="map-stage-wrapper">
+            <div class="map-interactive-container" id="mapInteractiveContainer">
+              <!-- SVG Taiwan Map -->
+              <svg id="taiwanSvgMap" viewBox="0 0 680 820" preserveAspectRatio="xMidYMid meet" class="taiwan-svg">
+                <defs>
+                  <!-- Holographic Grid / Glow Filters -->
+                  <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="8" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                  <linearGradient id="taiwanFillGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="var(--map-poly-start)" />
+                    <stop offset="100%" stop-color="var(--map-poly-end)" />
+                  </linearGradient>
+                  <linearGradient id="selectedCountyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#38bdf8" />
+                    <stop offset="100%" stop-color="#6366f1" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Subtle Map Grid Background -->
+                <g class="svg-grid-lines" opacity="0.15">
+                  <line x1="50" y1="200" x2="630" y2="200" stroke="currentColor" stroke-dasharray="4,8" />
+                  <line x1="50" y1="400" x2="630" y2="400" stroke="currentColor" stroke-dasharray="4,8" />
+                  <line x1="50" y1="600" x2="630" y2="600" stroke="currentColor" stroke-dasharray="4,8" />
+                  <line x1="200" y1="50" x2="200" y2="780" stroke="currentColor" stroke-dasharray="4,8" />
+                  <line x1="400" y1="50" x2="400" y2="780" stroke="currentColor" stroke-dasharray="4,8" />
+                </g>
+
+                <!-- Taiwan Island Realistic Geometrical Vector Paths -->
+                <g id="taiwanCountyPaths" class="county-paths-group">
+                  <!-- Keelung -->
+                  <path id="path-基隆市" data-county="基隆市" class="county-polygon" d="M472,122 L488,118 L496,128 L482,135 Z" />
+                  <!-- Taipei City -->
+                  <path id="path-臺北市" data-county="臺北市" class="county-polygon" d="M448,138 L465,130 L470,146 L454,156 Z" />
+                  <!-- New Taipei City -->
+                  <path id="path-新北市" data-county="新北市" class="county-polygon" d="M428,110 L478,98 L515,124 L500,165 L462,175 L430,160 L420,132 Z" />
+                  <!-- Taoyuan City -->
+                  <path id="path-桃園市" data-county="桃園市" class="county-polygon" d="M380,135 L428,128 L432,172 L410,210 L378,165 Z" />
+                  <!-- Hsinchu City -->
+                  <path id="path-新竹市" data-county="新竹市" class="county-polygon" d="M362,185 L382,178 L386,198 L368,202 Z" />
+                  <!-- Hsinchu County -->
+                  <path id="path-新竹縣" data-county="新竹縣" class="county-polygon" d="M380,182 L415,190 L420,240 L378,225 Z" />
+                  <!-- Miaoli County -->
+                  <path id="path-苗栗縣" data-county="苗栗縣" class="county-polygon" d="M340,215 L385,215 L405,268 L355,275 L332,240 Z" />
+                  <!-- Taichung City -->
+                  <path id="path-臺中市" data-county="臺中市" class="county-polygon" d="M328,265 L370,270 L448,280 L430,325 L348,320 L320,285 Z" />
+                  <!-- Changhua County -->
+                  <path id="path-彰化縣" data-county="彰化縣" class="county-polygon" d="M305,315 L346,315 L352,365 L310,360 Z" />
+                  <!-- Nantou County -->
+                  <path id="path-南投縣" data-county="南投縣" class="county-polygon" d="M352,318 L438,318 L440,430 L372,435 L348,365 Z" />
+                  <!-- Yunlin County -->
+                  <path id="path-雲林縣" data-county="雲林縣" class="county-polygon" d="M285,368 L348,368 L352,415 L288,415 Z" />
+                  <!-- Chiayi City -->
+                  <path id="path-嘉義市" data-county="嘉義市" class="county-polygon" d="M312,425 L328,422 L330,438 L314,440 Z" />
+                  <!-- Chiayi County -->
+                  <path id="path-嘉義縣" data-county="嘉義縣" class="county-polygon" d="M275,415 L372,420 L378,460 L285,462 Z" />
+                  <!-- Tainan City -->
+                  <path id="path-臺南市" data-county="臺南市" class="county-polygon" d="M265,465 L342,465 L345,530 L275,532 Z" />
+                  <!-- Kaohsiung City -->
+                  <path id="path-高雄市" data-county="高雄市" class="county-polygon" d="M278,532 L348,515 L378,520 L350,625 L292,620 Z" />
+                  <!-- Pingtung County -->
+                  <path id="path-屏東縣" data-county="屏東縣" class="county-polygon" d="M308,620 L358,610 L370,715 L342,750 L318,675 Z" />
+                  <!-- Yilan County -->
+                  <path id="path-宜蘭縣" data-county="宜蘭縣" class="county-polygon" d="M465,178 L525,185 L500,270 L448,255 Z" />
+                  <!-- Hualien County -->
+                  <path id="path-花蓮縣" data-county="花蓮縣" class="county-polygon" d="M445,268 L505,275 L458,485 L415,465 Z" />
+                  <!-- Taitung County -->
+                  <path id="path-臺東縣" data-county="臺東縣" class="county-polygon" d="M410,480 L460,490 L400,685 L355,670 Z" />
+                </g>
+              </svg>
+
+              <!-- Interactive Weather Pins Overlay (DOM elements pinned over Taiwan coordinates) -->
+              <div class="map-pins-layer" id="mapPinsLayer">
+                <!-- Dynamically generated badges for each county -->
+              </div>
+
+              <!-- Offshore Islands Inset Box (澎湖 / 金門 / 連江) -->
+              <div class="offshore-islands-box glass-panel">
+                <div class="islands-box-title">
+                  <i class="fa-solid fa-umbrella-beach"></i> 離島地區
+                </div>
+                <div class="island-pins-list" id="islandPinsList">
+                  <!-- Island chips with live weather & click event -->
+                </div>
+              </div>
+
+              <!-- Map Selected County Tooltip / Floating Card -->
+              <div class="map-hover-card" id="mapHoverCard">
+                <div class="hover-head">
+                  <span class="hover-name" id="hoverCountyName">苗栗縣</span>
+                  <span class="hover-tag" id="hoverRegionTag">中部</span>
+                </div>
+                <div class="hover-body">
+                  <div class="hover-icon" id="hoverWxIcon">🌤️</div>
+                  <div class="hover-metrics">
+                    <span class="hover-temp" id="hoverTemp">27° - 31°</span>
+                    <span class="hover-pop"><i class="fa-solid fa-umbrella"></i> <span id="hoverPoP">0%</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Map Footer Controls -->
+          <div class="map-footer-bar">
+            <span class="map-hint"><i class="fa-solid fa-hand-pointer"></i> 點選任意地圖圖示或離島即可立即檢視詳細預報</span>
+            <button class="reset-view-btn" id="resetMapSelectionBtn"><i class="fa-solid fa-rotate-left"></i> 回到預設</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal: All 22 Counties Overview Table (縣市預報總覽) -->
+    <div class="custom-modal-backdrop" id="overviewModal">
+      <div class="custom-modal-dialog glass-panel">
+        <div class="modal-dialog-header">
+          <div class="modal-title-wrap">
+            <i class="fa-solid fa-table-list text-primary"></i>
+            <h3>全臺 22 縣市即時氣象與 36 小時預報總覽</h3>
+          </div>
+          <button class="modal-close-btn" id="closeOverviewModalBtn">&times;</button>
+        </div>
+        <div class="modal-search-box">
+          <input type="text" id="modalCountyFilter" placeholder="過濾縣市名稱（如：台中、高雄、台東）...">
+        </div>
+        <div class="modal-table-responsive">
+          <table class="weather-table" id="allCountiesTable">
+            <thead>
+              <tr>
+                <th>縣市名稱</th>
+                <th>行政分區</th>
+                <th>當前天氣現象</th>
+                <th>今白天氣溫</th>
+                <th>今晚明晨氣溫</th>
+                <th>明日白天氣溫</th>
+                <th>降雨機率</th>
+                <th>舒適度指標</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="allCountiesTableBody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Weather Ranking (氣溫排行榜) -->
+    <div class="custom-modal-backdrop" id="rankingModal">
+      <div class="custom-modal-dialog glass-panel ranking-dialog">
+        <div class="modal-dialog-header">
+          <div class="modal-title-wrap">
+            <i class="fa-solid fa-ranking-star text-amber"></i>
+            <h3>全臺氣溫風雲榜 (即時最高溫 vs 最低溫)</h3>
+          </div>
+          <button class="modal-close-btn" id="closeRankingModalBtn">&times;</button>
+        </div>
+        <div class="ranking-twin-columns">
+          <div class="ranking-column hot-column">
+            <h4><i class="fa-solid fa-fire text-red"></i> 頂級高溫排行 TOP 5</h4>
+            <div class="ranking-list" id="topHotList"></div>
+          </div>
+          <div class="ranking-column cold-column">
+            <h4><i class="fa-solid fa-snowflake text-sky"></i> 清涼低溫排行 TOP 5</h4>
+            <div class="ranking-list" id="topColdList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: API Data & Architecture (課綱架構解說) -->
+    <div class="custom-modal-backdrop" id="apiDocModal">
+      <div class="custom-modal-dialog glass-panel doc-dialog">
+        <div class="modal-dialog-header">
+          <div class="modal-title-wrap">
+            <i class="fa-solid fa-code-branch text-teal"></i>
+            <h3>中央氣象署 OpenData API 規格與專案架構</h3>
+          </div>
+          <button class="modal-close-btn" id="closeApiDocModalBtn">&times;</button>
+        </div>
+        <div class="doc-body-scroll">
+          <div class="doc-badge-pill">CWA-3DD1F6E5-73FC-4BB2-9B9F-E70B335322E3</div>
+          <h4>1. 氣象署開放資料 API 規格 (F-C0032-001)</h4>
+          <p>本專案使用中央氣象署<strong>「一般天氣預報-今明36小時天氣預報」</strong>資料集，涵蓋全台 22 縣市三階段時段預報：</p>
+          <ul>
+            <li><code>Wx (Weather Phenomenon)</code>：天氣現象文字及數值代碼（例如：晴天、多雲時晴、陰短暫陣雨）。</li>
+            <li><code>MaxT (Maximum Temperature)</code>：預測最高溫度 (°C)。</li>
+            <li><code>MinT (Minimum Temperature)</code>：預測最低溫度 (°C)。</li>
+            <li><code>PoP (Probability of Precipitation)</code>：預測降雨機率 (%)。</li>
+            <li><code>CI (Comfort Index)</code>：人體體感舒適度（如：舒適、悶熱、寒冷）。</li>
+          </ul>
+
+          <h4>2. 本地 SQLite 資料庫腳本 (遵循課綱流程)</h4>
+          <p>已實作 <code>weather_db.py</code>，支援在終端機一鍵執行：</p>
+          <pre><code># 執行 Python 擷取氣象署資料並存入 SQLite
+python weather_db.py</code></pre>
+          <p>資料會自動格式化並持久化於 <code>weather.db</code> 的 <code>weather_forecast</code> 與 <code>sync_logs</code> 表格中。</p>
+
+          <h4>3. GitHub 儲存庫同步</h4>
+          <p>已為您配置 <code>push_to_github.bat</code>，只要在終端機或點擊該腳本，即可將最新程式碼自動推送到您的 GitHub：<br>
+          <a href="https://github.com/hankyyyyyy/HW10-Taiwan-Weather" target="_blank" rel="noopener">https://github.com/hankyyyyyy/HW10-Taiwan-Weather</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Footer -->
+    <footer class="app-footer glass-card">
+      <div class="footer-left">
+        <p>© 2026 Taiwan Weather Hub. 遵循中央氣象署資料開放授權條款.</p>
+        <p class="credit-text">開發者：Hank Chang (張佑維) · Antigravity AI IDE Vibe Coding 專案</p>
+      </div>
+      <div class="footer-right">
+        <span class="status-indicator online"><i class="fa-solid fa-circle"></i> CWA API 連線正常</span>
+        <a href="https://github.com/hankyyyyyy/HW10-Taiwan-Weather" target="_blank" rel="noopener" class="github-repo-link">
+          <i class="fa-brands fa-github"></i> HW10-Taiwan-Weather
+        </a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Main JavaScript Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -33,6 +33,7 @@
   1. **AI 智慧手勢與視訊辨識助手**（Python / OpenCV / MediaPipe / PyTorch）
   2. **雲端即時協作筆記 Web 系統**（HTML5 / CSS3 / JavaScript / WebSocket）
   3. **IoT 智慧校園微環境監測站**（本學期預計完成專案，C/C++ / ESP32 / MQTT）
+  4. **臺灣即時氣象與 36 小時預報系統 (Taiwan Weather Hub)**（HTML5 / CSS3 / JavaScript / CWA API / 臺灣 22 縣市向量地圖），點擊 [weather/index.html](file:///c:/Users/user/.gemini/antigravity-ide/scratch/personal-portfolio/weather/index.html) 即可直接體驗。
 - 每個卡片均具備清晰的專案說明、技術棧標籤與 GitHub 原始碼連結。
 
 ### 4. ⏱️ Live Clock (JavaScript 即時時鐘)
