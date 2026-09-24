@@ -18,7 +18,7 @@ const state = {
   currentRegionFilter: "all",
   favorites: JSON.parse(localStorage.getItem("taiwan_weather_favs") || "[]"),
   mapMode: "temp", // "wind" (效果一) | "temp" (效果二) | "icon" | "pop"
-  mapStyle: "dark", // "dark" | "satellite"
+  mapStyle: "topo", // "topo" (等高線起伏地形) | "ocean" (海洋等深) | "satellite" (高解析衛星)
   showStationValues: true, // 顯示測站數值開關
   enableWindAnimation: true, // 海洋流體風場開關
   isLightMode: false,
@@ -552,14 +552,24 @@ function setBasemapStyle(styleType, mapInstance = state.leafletMap) {
   if (!mapInstance) return;
   if (state.tileLayer) mapInstance.removeLayer(state.tileLayer);
 
-  let tileUrl = "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png";
-  if (styleType === "satellite") {
+  let tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}";
+  let maxZ = 13;
+
+  if (styleType === "topo") {
+    // 真實等高線起伏陰影地形 (Shaded Relief & Elevation Contours) - 無任何浮水印
+    tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}";
+  } else if (styleType === "ocean") {
+    // 深邃海圖與海洋深度等深線 (World Ocean Base) - 無任何浮水印
+    tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}";
+  } else if (styleType === "satellite") {
+    // 高解析真實衛星影像 - 無任何浮水印
     tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+    maxZ = 18;
   }
 
   state.tileLayer = L.tileLayer(tileUrl, {
-    subdomains: "abcd",
-    maxZoom: 19
+    maxZoom: maxZ,
+    attribution: ""
   }).addTo(mapInstance);
 }
 
@@ -1288,24 +1298,28 @@ function setupEventListeners() {
     });
   }
 
-  // Basemap style toggles (dark / satellite)
-  const btnStyleDark = document.getElementById("btnStyleDark");
-  const btnStyleSat = document.getElementById("btnStyleSat");
-  if (btnStyleDark && btnStyleSat) {
-    btnStyleDark.addEventListener("click", () => {
-      btnStyleDark.classList.add("active");
-      btnStyleSat.classList.remove("active");
-      state.mapStyle = "dark";
-      setBasemapStyle("dark");
-    });
+  // Basemap style toggles (topo / ocean / satellite)
+  const styleButtons = [
+    { id: "btnStyleTopo", style: "topo", name: "真實等高線起伏地形" },
+    { id: "btnStyleOcean", style: "ocean", name: "海洋深度等深線海圖" },
+    { id: "btnStyleSat", style: "satellite", name: "高解析真實衛星影像" }
+  ];
 
-    btnStyleSat.addEventListener("click", () => {
-      btnStyleSat.classList.add("active");
-      btnStyleDark.classList.remove("active");
-      state.mapStyle = "satellite";
-      setBasemapStyle("satellite");
-    });
-  }
+  styleButtons.forEach(item => {
+    const btn = document.getElementById(item.id);
+    if (btn) {
+      btn.addEventListener("click", () => {
+        styleButtons.forEach(other => {
+          const ob = document.getElementById(other.id);
+          if (ob) ob.classList.remove("active");
+        });
+        btn.classList.add("active");
+        state.mapStyle = item.style;
+        setBasemapStyle(item.style);
+        showToast(`已切換底圖：【${item.name}】(無浮水印)`, "info");
+      });
+    }
+  });
 
   // Offshore islands quick navigation
   document.querySelectorAll(".island-jump-btn").forEach(btn => {

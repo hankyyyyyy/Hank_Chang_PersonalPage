@@ -395,8 +395,9 @@
               </label>
             </div>
             <div class="map-style-toggles">
-              <button class="style-toggle-btn active" data-style="dark" id="btnStyleDark" title="深邃海圖"><i class="fa-solid fa-moon"></i> 深色海圖</button>
-              <button class="style-toggle-btn" data-style="satellite" id="btnStyleSat" title="真實衛星"><i class="fa-solid fa-satellite"></i> 衛星地形</button>
+              <button class="style-toggle-btn active" data-style="topo" id="btnStyleTopo" title="真實等高線起伏地形"><i class="fa-solid fa-mountain"></i> 等高線地形</button>
+              <button class="style-toggle-btn" data-style="ocean" id="btnStyleOcean" title="深邃海圖與等深線"><i class="fa-solid fa-water"></i> 海洋等深</button>
+              <button class="style-toggle-btn" data-style="satellite" id="btnStyleSat" title="高解析真實衛星"><i class="fa-solid fa-satellite"></i> 衛星影像</button>
             </div>
           </div>
 
@@ -534,7 +535,7 @@
           <button class="modal-close-btn" id="closeApiDocModalBtn">&times;</button>
         </div>
         <div class="doc-body-scroll">
-          <div class="doc-badge-pill">CWA-3DD1F6E5-73FC-4BB2-9B9F-E70B335322E3</div>
+          <div class="doc-badge-pill">中央氣象署開放資料授權 (CWA OpenData)</div>
           <h4>1. 氣象署開放資料 API 規格 (F-C0032-001)</h4>
           <p>本專案使用中央氣象署<strong>「一般天氣預報-今明36小時天氣預報」</strong>資料集，涵蓋全台 22 縣市三階段時段預報：</p>
           <ul>
@@ -568,7 +569,7 @@ python weather_db.py</code></pre>
         <p class="credit-text">開發者：Hank Chang (張佑維) · Antigravity AI IDE Vibe Coding 專案</p>
       </div>
       <div class="footer-right">
-        <span class="status-indicator online"><i class="fa-solid fa-circle"></i> CWA API 連線正常</span>
+        <span class="status-indicator online"><i class="fa-solid fa-circle"></i> 氣象署即時資料連線中</span>
         <a href="https://github.com/hankyyyyyy/HW10-Taiwan-Weather" target="_blank" rel="noopener" class="github-repo-link">
           <i class="fa-brands fa-github"></i> HW10-Taiwan-Weather
         </a>

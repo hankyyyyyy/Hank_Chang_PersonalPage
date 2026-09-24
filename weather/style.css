@@ -1190,6 +1190,16 @@ body.light-mode .temp-big-display .temp-num {
   z-index: 1;
 }
 
+/* Topographic & Contour Tile Enhancement (Cyber Atmospheric Filter) */
+.taiwan-leaflet-canvas .leaflet-tile {
+  filter: brightness(0.78) contrast(1.35) saturate(1.2);
+  transition: filter 0.3s ease;
+}
+
+body.light-mode .taiwan-leaflet-canvas .leaflet-tile {
+  filter: brightness(1.0) contrast(1.1);
+}
+
 /* Wind Particle Canvas Overlay */
 .wind-particle-canvas {
   position: absolute;
