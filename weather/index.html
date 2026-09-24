@@ -18,6 +18,9 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   
+  <!-- Leaflet GIS Map CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  
   <!-- Custom Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
@@ -351,136 +354,111 @@
         <div class="interactive-map-panel glass-panel">
           <div class="map-panel-header">
             <div class="map-title-box">
-              <i class="fa-solid fa-map-location-dot text-primary"></i>
+              <i class="fa-solid fa-earth-asia text-primary"></i>
               <div>
-                <h3>臺灣互動氣象地圖</h3>
-                <p>點擊地圖上任一縣市氣象圖標，立即切換當前觀測</p>
+                <h3>臺灣高解析 GIS 氣象互動地圖</h3>
+                <p>整合 22 縣市真實高精分界、動態流體風場與中央氣象署溫度分布熱圖</p>
               </div>
             </div>
 
-            <!-- Map View Mode Switchers -->
+            <!-- Enhanced Map View Mode Switchers -->
             <div class="map-mode-pills">
-              <button class="map-mode-btn active" data-mode="icon" title="顯示天氣圖示與氣溫">
-                <i class="fa-solid fa-cloud-sun"></i> 圖示模式
+              <button class="map-mode-btn" data-mode="wind" id="btnModeWind" title="效果一：海洋大氣動態流體風場 (類似 Windy 流線)">
+                <i class="fa-solid fa-wind"></i> 動態風場
               </button>
-              <button class="map-mode-btn" data-mode="temp" title="顯示純氣溫數據">
-                <i class="fa-solid fa-temperature-high"></i> 氣溫分佈
+              <button class="map-mode-btn active" data-mode="temp" id="btnModeTemp" title="效果二：氣象署官方 溫度分布熱圖 (含色階量表與測站標記)">
+                <i class="fa-solid fa-temperature-high"></i> 溫度分布圖
               </button>
-              <button class="map-mode-btn" data-mode="pop" title="顯示降雨機率">
+              <button class="map-mode-btn" data-mode="icon" id="btnModeIcon" title="顯示各縣市天氣圖徽與平均氣溫">
+                <i class="fa-solid fa-cloud-sun"></i> 氣象圖示
+              </button>
+              <button class="map-mode-btn" data-mode="pop" id="btnModePoP" title="顯示全台降雨機率分佈">
                 <i class="fa-solid fa-umbrella"></i> 降雨機率
               </button>
             </div>
           </div>
 
-          <!-- Taiwan SVG Map Interactive Stage -->
+          <!-- Secondary Toolbar: Show Numbers & Basemap switch -->
+          <div class="map-sub-toolbar">
+            <div class="sub-tool-item">
+              <label class="switch-label">
+                <input type="checkbox" id="toggleShowValues" checked>
+                <span class="slider-toggle"></span>
+                <span class="switch-text"><i class="fa-solid fa-list-ol"></i> 顯示全臺測站氣溫數值</span>
+              </label>
+            </div>
+            <div class="sub-tool-item">
+              <label class="switch-label">
+                <input type="checkbox" id="toggleWindFlow" checked>
+                <span class="slider-toggle"></span>
+                <span class="switch-text"><i class="fa-solid fa-water"></i> 海洋流體風場動畫</span>
+              </label>
+            </div>
+            <div class="map-style-toggles">
+              <button class="style-toggle-btn active" data-style="dark" id="btnStyleDark" title="深邃海圖"><i class="fa-solid fa-moon"></i> 深色海圖</button>
+              <button class="style-toggle-btn" data-style="satellite" id="btnStyleSat" title="真實衛星"><i class="fa-solid fa-satellite"></i> 衛星地形</button>
+            </div>
+          </div>
+
+          <!-- Leaflet GIS Map Container with Overlay Canvas -->
           <div class="map-stage-wrapper">
-            <div class="map-interactive-container" id="mapInteractiveContainer">
-              <!-- SVG Taiwan Map -->
-              <svg id="taiwanSvgMap" viewBox="0 0 680 820" preserveAspectRatio="xMidYMid meet" class="taiwan-svg">
-                <defs>
-                  <!-- Holographic Grid / Glow Filters -->
-                  <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="8" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
-                  <linearGradient id="taiwanFillGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="var(--map-poly-start)" />
-                    <stop offset="100%" stop-color="var(--map-poly-end)" />
-                  </linearGradient>
-                  <linearGradient id="selectedCountyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#38bdf8" />
-                    <stop offset="100%" stop-color="#6366f1" />
-                  </linearGradient>
-                </defs>
+            <!-- Leaflet Map Mount Point -->
+            <div id="taiwanLeafletMap" class="taiwan-leaflet-canvas"></div>
 
-                <!-- Subtle Map Grid Background -->
-                <g class="svg-grid-lines" opacity="0.15">
-                  <line x1="50" y1="200" x2="630" y2="200" stroke="currentColor" stroke-dasharray="4,8" />
-                  <line x1="50" y1="400" x2="630" y2="400" stroke="currentColor" stroke-dasharray="4,8" />
-                  <line x1="50" y1="600" x2="630" y2="600" stroke="currentColor" stroke-dasharray="4,8" />
-                  <line x1="200" y1="50" x2="200" y2="780" stroke="currentColor" stroke-dasharray="4,8" />
-                  <line x1="400" y1="50" x2="400" y2="780" stroke="currentColor" stroke-dasharray="4,8" />
-                </g>
+            <!-- Dynamic Flowing Wind Particle Canvas -->
+            <canvas id="windParticleCanvas" class="wind-particle-canvas"></canvas>
 
-                <!-- Taiwan Island Realistic Geometrical Vector Paths -->
-                <g id="taiwanCountyPaths" class="county-paths-group">
-                  <!-- Keelung -->
-                  <path id="path-基隆市" data-county="基隆市" class="county-polygon" d="M472,122 L488,118 L496,128 L482,135 Z" />
-                  <!-- Taipei City -->
-                  <path id="path-臺北市" data-county="臺北市" class="county-polygon" d="M448,138 L465,130 L470,146 L454,156 Z" />
-                  <!-- New Taipei City -->
-                  <path id="path-新北市" data-county="新北市" class="county-polygon" d="M428,110 L478,98 L515,124 L500,165 L462,175 L430,160 L420,132 Z" />
-                  <!-- Taoyuan City -->
-                  <path id="path-桃園市" data-county="桃園市" class="county-polygon" d="M380,135 L428,128 L432,172 L410,210 L378,165 Z" />
-                  <!-- Hsinchu City -->
-                  <path id="path-新竹市" data-county="新竹市" class="county-polygon" d="M362,185 L382,178 L386,198 L368,202 Z" />
-                  <!-- Hsinchu County -->
-                  <path id="path-新竹縣" data-county="新竹縣" class="county-polygon" d="M380,182 L415,190 L420,240 L378,225 Z" />
-                  <!-- Miaoli County -->
-                  <path id="path-苗栗縣" data-county="苗栗縣" class="county-polygon" d="M340,215 L385,215 L405,268 L355,275 L332,240 Z" />
-                  <!-- Taichung City -->
-                  <path id="path-臺中市" data-county="臺中市" class="county-polygon" d="M328,265 L370,270 L448,280 L430,325 L348,320 L320,285 Z" />
-                  <!-- Changhua County -->
-                  <path id="path-彰化縣" data-county="彰化縣" class="county-polygon" d="M305,315 L346,315 L352,365 L310,360 Z" />
-                  <!-- Nantou County -->
-                  <path id="path-南投縣" data-county="南投縣" class="county-polygon" d="M352,318 L438,318 L440,430 L372,435 L348,365 Z" />
-                  <!-- Yunlin County -->
-                  <path id="path-雲林縣" data-county="雲林縣" class="county-polygon" d="M285,368 L348,368 L352,415 L288,415 Z" />
-                  <!-- Chiayi City -->
-                  <path id="path-嘉義市" data-county="嘉義市" class="county-polygon" d="M312,425 L328,422 L330,438 L314,440 Z" />
-                  <!-- Chiayi County -->
-                  <path id="path-嘉義縣" data-county="嘉義縣" class="county-polygon" d="M275,415 L372,420 L378,460 L285,462 Z" />
-                  <!-- Tainan City -->
-                  <path id="path-臺南市" data-county="臺南市" class="county-polygon" d="M265,465 L342,465 L345,530 L275,532 Z" />
-                  <!-- Kaohsiung City -->
-                  <path id="path-高雄市" data-county="高雄市" class="county-polygon" d="M278,532 L348,515 L378,520 L350,625 L292,620 Z" />
-                  <!-- Pingtung County -->
-                  <path id="path-屏東縣" data-county="屏東縣" class="county-polygon" d="M308,620 L358,610 L370,715 L342,750 L318,675 Z" />
-                  <!-- Yilan County -->
-                  <path id="path-宜蘭縣" data-county="宜蘭縣" class="county-polygon" d="M465,178 L525,185 L500,270 L448,255 Z" />
-                  <!-- Hualien County -->
-                  <path id="path-花蓮縣" data-county="花蓮縣" class="county-polygon" d="M445,268 L505,275 L458,485 L415,465 Z" />
-                  <!-- Taitung County -->
-                  <path id="path-臺東縣" data-county="臺東縣" class="county-polygon" d="M410,480 L460,490 L400,685 L355,670 Z" />
-                </g>
-              </svg>
-
-              <!-- Interactive Weather Pins Overlay (DOM elements pinned over Taiwan coordinates) -->
-              <div class="map-pins-layer" id="mapPinsLayer">
-                <!-- Dynamically generated badges for each county -->
+            <!-- CWA Official Temperature Scale Bar (Matching Image 2) -->
+            <div class="cwa-temp-legend visible" id="cwaTempLegend">
+              <div class="legend-header">
+                <span class="legend-title">溫度分布圖</span>
+                <span class="legend-sub">Temperature</span>
+                <span class="legend-unit">攝氏(°C)</span>
               </div>
-
-              <!-- Offshore Islands Inset Box (澎湖 / 金門 / 連江) -->
-              <div class="offshore-islands-box glass-panel">
-                <div class="islands-box-title">
-                  <i class="fa-solid fa-umbrella-beach"></i> 離島地區
-                </div>
-                <div class="island-pins-list" id="islandPinsList">
-                  <!-- Island chips with live weather & click event -->
+              <div class="legend-body">
+                <div class="legend-bar-gradient"></div>
+                <div class="legend-ticks">
+                  <span class="tick-label t38">38</span>
+                  <span class="tick-label t35">35</span>
+                  <span class="tick-label t33">33</span>
+                  <span class="tick-label t31">31</span>
+                  <span class="tick-label t29">29</span>
+                  <span class="tick-label t27">27</span>
+                  <span class="tick-label t25">25</span>
+                  <span class="tick-label t23">23</span>
+                  <span class="tick-label t21">21</span>
+                  <span class="tick-label t19">19</span>
+                  <span class="tick-label t17">17</span>
+                  <span class="tick-label t15">15</span>
+                  <span class="tick-label t13">13</span>
+                  <span class="tick-label t11">11</span>
+                  <span class="tick-label t09">9</span>
+                  <span class="tick-label t05">5</span>
+                  <span class="tick-label t01">1</span>
+                  <span class="tick-label tm1">-1</span>
                 </div>
               </div>
+            </div>
 
-              <!-- Map Selected County Tooltip / Floating Card -->
-              <div class="map-hover-card" id="mapHoverCard">
-                <div class="hover-head">
-                  <span class="hover-name" id="hoverCountyName">苗栗縣</span>
-                  <span class="hover-tag" id="hoverRegionTag">中部</span>
-                </div>
-                <div class="hover-body">
-                  <div class="hover-icon" id="hoverWxIcon">🌤️</div>
-                  <div class="hover-metrics">
-                    <span class="hover-temp" id="hoverTemp">27° - 31°</span>
-                    <span class="hover-pop"><i class="fa-solid fa-umbrella"></i> <span id="hoverPoP">0%</span></span>
-                  </div>
-                </div>
-              </div>
+            <!-- Offshore Islands Inset Quick Bar -->
+            <div class="offshore-islands-quickbar glass-panel">
+              <span class="islands-label"><i class="fa-solid fa-compass"></i> 外島巡航：</span>
+              <button class="island-jump-btn" data-county="連江縣">連江(馬祖)</button>
+              <button class="island-jump-btn" data-county="金門縣">金門</button>
+              <button class="island-jump-btn" data-county="澎湖縣">澎湖</button>
+            </div>
+
+            <!-- Hover County Real-time Info Pill -->
+            <div class="map-hover-county-badge" id="mapHoverCountyBadge">
+              <span class="hover-county-title" id="hoverCountyTitle">苗栗縣</span>
+              <span class="hover-county-desc" id="hoverCountyDesc">多雲時晴 · 31°C</span>
             </div>
           </div>
 
           <!-- Map Footer Controls -->
           <div class="map-footer-bar">
-            <span class="map-hint"><i class="fa-solid fa-hand-pointer"></i> 點選任意地圖圖示或離島即可立即檢視詳細預報</span>
-            <button class="reset-view-btn" id="resetMapSelectionBtn"><i class="fa-solid fa-rotate-left"></i> 回到預設</button>
+            <span class="map-hint"><i class="fa-solid fa-hand-pointer"></i> 點選地圖任一縣市分界即可即時切換觀測；滾輪可縮放地圖細節</span>
+            <button class="reset-view-btn" id="resetMapSelectionBtn"><i class="fa-solid fa-expand"></i> 重設全臺視角</button>
           </div>
         </div>
       </section>
@@ -598,6 +576,10 @@ python weather_db.py</code></pre>
     </footer>
   </div>
 
+  <!-- Leaflet GIS Map & High-Precision Taiwan Counties GeoJSON -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script src="taiwan_counties_data.js"></script>
+  
   <!-- Main JavaScript Logic -->
   <script src="app.js"></script>
 </body>

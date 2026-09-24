@@ -1,6 +1,6 @@
 /**
  * ==============================================================================
- * TAIWAN WEATHER HUB - CORE APPLICATION JAVASCRIPT
+ * TAIWAN WEATHER HUB - GIS LEAFLET & DYNAMIC WIND / HEATMAP ENGINE
  * 遵循中央氣象署 CWA OpenData API (F-C0032-001) 資料規格
  * 開發者：Hank Chang (張佑維)
  * ==============================================================================
@@ -17,41 +17,78 @@ const state = {
   currentTownship: "苗栗市",
   currentRegionFilter: "all",
   favorites: JSON.parse(localStorage.getItem("taiwan_weather_favs") || "[]"),
-  mapMode: "icon", // "icon" | "temp" | "pop"
+  mapMode: "temp", // "wind" (效果一) | "temp" (效果二) | "icon" | "pop"
+  mapStyle: "dark", // "dark" | "satellite"
+  showStationValues: true, // 顯示測站數值開關
+  enableWindAnimation: true, // 海洋流體風場開關
   isLightMode: false,
   isSoundPlaying: false,
   audioCtx: null,
   audioNodes: null,
   lastUpdated: null,
+  leafletMap: null,
+  geojsonLayer: null,
+  markersLayer: null,
+  tileLayer: null,
+  windAnimationId: null,
 };
 
-// County Geographic Info, Regions, Coordinates on SVG Stage (x%, y%)
+// County Geographic Info & Approximate Center Lat/Lon
 const COUNTY_CONFIG = {
-  "基隆市": { region: "north", x: 70, y: 13, lat: 25.13, lon: 121.74, aqiStation: "基隆" },
-  "臺北市": { region: "north", x: 63, y: 16, lat: 25.04, lon: 121.56, aqiStation: "士林" },
-  "新北市": { region: "north", x: 67, y: 19, lat: 25.01, lon: 121.46, aqiStation: "板橋" },
-  "桃園市": { region: "north", x: 57, y: 18, lat: 24.99, lon: 121.30, aqiStation: "桃園" },
-  "新竹市": { region: "north", x: 50, y: 22, lat: 24.81, lon: 120.97, aqiStation: "新竹" },
-  "新竹縣": { region: "north", x: 56, y: 23, lat: 24.84, lon: 121.01, aqiStation: "竹東" },
-  "苗栗縣": { region: "central", x: 48, y: 28, lat: 24.56, lon: 120.82, aqiStation: "苗栗" },
-  "臺中市": { region: "central", x: 47, y: 34, lat: 24.16, lon: 120.68, aqiStation: "西屯" },
-  "彰化縣": { region: "central", x: 42, y: 39, lat: 24.08, lon: 120.54, aqiStation: "彰化" },
-  "南投縣": { region: "central", x: 54, y: 42, lat: 23.90, lon: 120.69, aqiStation: "南投" },
-  "雲林縣": { region: "central", x: 39, y: 46, lat: 23.71, lon: 120.43, aqiStation: "斗六" },
-  "嘉義市": { region: "south", x: 44, y: 50, lat: 23.48, lon: 120.45, aqiStation: "嘉義" },
-  "嘉義縣": { region: "south", x: 37, y: 51, lat: 23.45, lon: 120.26, aqiStation: "朴子" },
-  "臺南市": { region: "south", x: 38, y: 58, lat: 22.99, lon: 120.21, aqiStation: "臺南" },
-  "高雄市": { region: "south", x: 43, y: 67, lat: 22.62, lon: 120.30, aqiStation: "前金" },
-  "屏東縣": { region: "south", x: 46, y: 78, lat: 22.67, lon: 120.49, aqiStation: "屏東" },
-  "宜蘭縣": { region: "north", x: 72, y: 27, lat: 24.75, lon: 121.75, aqiStation: "宜蘭" },
-  "花蓮縣": { region: "east", x: 67, y: 42, lat: 23.99, lon: 121.61, aqiStation: "花蓮" },
-  "臺東縣": { region: "east", x: 59, y: 68, lat: 22.76, lon: 121.14, aqiStation: "臺東" },
-  "澎湖縣": { region: "islands", x: 18, y: 48, lat: 23.57, lon: 119.58, aqiStation: "馬公" },
-  "金門縣": { region: "islands", x: 12, y: 32, lat: 24.44, lon: 118.32, aqiStation: "金門" },
-  "連江縣": { region: "islands", x: 22, y: 15, lat: 26.15, lon: 119.95, aqiStation: "馬祖" },
+  "基隆市": { region: "north", lat: 25.13, lon: 121.74, aqiStation: "基隆" },
+  "臺北市": { region: "north", lat: 25.04, lon: 121.56, aqiStation: "士林" },
+  "新北市": { region: "north", lat: 25.01, lon: 121.46, aqiStation: "板橋" },
+  "桃園市": { region: "north", lat: 24.99, lon: 121.30, aqiStation: "桃園" },
+  "新竹市": { region: "north", lat: 24.81, lon: 120.97, aqiStation: "新竹" },
+  "新竹縣": { region: "north", lat: 24.84, lon: 121.01, aqiStation: "竹東" },
+  "苗栗縣": { region: "central", lat: 24.56, lon: 120.82, aqiStation: "苗栗" },
+  "臺中市": { region: "central", lat: 24.16, lon: 120.68, aqiStation: "西屯" },
+  "彰化縣": { region: "central", lat: 24.08, lon: 120.54, aqiStation: "彰化" },
+  "南投縣": { region: "central", lat: 23.90, lon: 120.69, aqiStation: "南投" },
+  "雲林縣": { region: "central", lat: 23.71, lon: 120.43, aqiStation: "斗六" },
+  "嘉義市": { region: "south", lat: 23.48, lon: 120.45, aqiStation: "嘉義" },
+  "嘉義縣": { region: "south", lat: 23.45, lon: 120.26, aqiStation: "朴子" },
+  "臺南市": { region: "south", lat: 22.99, lon: 120.21, aqiStation: "臺南" },
+  "高雄市": { region: "south", lat: 22.62, lon: 120.30, aqiStation: "前金" },
+  "屏東縣": { region: "south", lat: 22.55, lon: 120.54, aqiStation: "屏東" },
+  "宜蘭縣": { region: "north", lat: 24.75, lon: 121.75, aqiStation: "宜蘭" },
+  "花蓮縣": { region: "east", lat: 23.99, lon: 121.61, aqiStation: "花蓮" },
+  "臺東縣": { region: "east", lat: 22.76, lon: 121.14, aqiStation: "臺東" },
+  "澎湖縣": { region: "islands", lat: 23.57, lon: 119.58, aqiStation: "馬公" },
+  "金門縣": { region: "islands", lat: 24.44, lon: 118.32, aqiStation: "金門" },
+  "連江縣": { region: "islands", lat: 26.15, lon: 119.95, aqiStation: "馬祖" },
 };
 
-// Region Names in Traditional Chinese
+// Key Observation Stations (Matching Image 2 CWA Temperature Map)
+const CWA_STATIONS = [
+  { name: "基隆", county: "基隆市", lat: 25.133, lon: 121.740, tempOffset: 0 },
+  { name: "臺北", county: "臺北市", lat: 25.038, lon: 121.515, tempOffset: 0.5 },
+  { name: "板橋", county: "新北市", lat: 25.014, lon: 121.442, tempOffset: 0.3 },
+  { name: "桃園", county: "桃園市", lat: 24.993, lon: 121.311, tempOffset: -0.8 },
+  { name: "新竹", county: "新竹市", lat: 24.828, lon: 120.968, tempOffset: -0.2 },
+  { name: "竹北", county: "新竹縣", lat: 24.838, lon: 121.011, tempOffset: 0 },
+  { name: "苗栗", county: "苗栗縣", lat: 24.565, lon: 120.821, tempOffset: 0 },
+  { name: "後龍", county: "苗栗縣", lat: 24.615, lon: 120.785, tempOffset: -0.6 },
+  { name: "臺中", county: "臺中市", lat: 24.146, lon: 120.684, tempOffset: 1.2 },
+  { name: "彰化", county: "彰化縣", lat: 24.081, lon: 120.543, tempOffset: 1.4 },
+  { name: "南投", county: "南投縣", lat: 23.909, lon: 120.686, tempOffset: -1.0 },
+  { name: "日月潭", county: "南投縣", lat: 23.881, lon: 120.908, tempOffset: -4.8, fixedTemp: 26.2 },
+  { name: "阿里山", county: "嘉義縣", lat: 23.510, lon: 120.803, tempOffset: -18.0, fixedTemp: 11.6 }, // 玉山阿里山高山冷溫 (Image 2)
+  { name: "斗六", county: "雲林縣", lat: 23.712, lon: 120.545, tempOffset: 0.7 },
+  { name: "嘉義", county: "嘉義市", lat: 23.496, lon: 120.433, tempOffset: 0.8 },
+  { name: "臺南", county: "臺南市", lat: 22.993, lon: 120.204, tempOffset: 0.3 },
+  { name: "高雄", county: "高雄市", lat: 22.623, lon: 120.309, tempOffset: 0.8 },
+  { name: "屏東", county: "屏東縣", lat: 22.673, lon: 120.488, tempOffset: 0.7 },
+  { name: "恆春", county: "屏東縣", lat: 22.004, lon: 120.746, tempOffset: -0.4, fixedTemp: 30.6 },
+  { name: "宜蘭", county: "宜蘭縣", lat: 24.764, lon: 121.756, tempOffset: -1.5 },
+  { name: "花蓮", county: "花蓮縣", lat: 23.975, lon: 121.605, tempOffset: 0.2 },
+  { name: "臺東", county: "臺東縣", lat: 22.755, lon: 121.154, tempOffset: 0.5 },
+  { name: "成功", county: "臺東縣", lat: 23.100, lon: 121.373, tempOffset: -0.8 },
+  { name: "澎湖", county: "澎湖縣", lat: 23.565, lon: 119.563, tempOffset: 0, fixedTemp: 30.0 },
+  { name: "金門", county: "金門縣", lat: 24.406, lon: 118.289, tempOffset: -1.4, fixedTemp: 28.6 },
+  { name: "馬祖", county: "連江縣", lat: 26.169, lon: 119.923, tempOffset: -0.1, fixedTemp: 29.9 },
+];
+
 const REGION_NAMES = {
   "north": "北部地區",
   "central": "中部地區",
@@ -60,7 +97,6 @@ const REGION_NAMES = {
   "islands": "外島地區"
 };
 
-// Townships for each county
 const COUNTY_TOWNSHIPS = {
   "苗栗縣": ["苗栗市", "竹南鎮", "頭份市", "後龍鎮", "通霄鎮", "苑裡鎮", "卓蘭鎮", "造橋鄉", "三灣鄉", "南庄鄉", "公館鄉", "大湖鄉", "泰安鄉", "銅鑼鄉", "三義鄉", "西湖鄉", "頭屋鄉", "獅潭鄉"],
   "臺北市": ["中正區", "大同區", "中山區", "松山區", "大安區", "萬華區", "信義區", "士林區", "北投區", "內湖區", "南港區", "文山區"],
@@ -86,37 +122,65 @@ const COUNTY_TOWNSHIPS = {
   "連江縣": ["南竿鄉", "北竿鄉", "莒光鄉", "東引鄉"]
 };
 
-// Weather Condition Helper: Glyphs & Color Schemes
+// ==============================================================================
+// CWA COLOR SCALE HELPER (Matching Image 2 Temperature Map)
+// ==============================================================================
+function getCWATemperatureColor(temp) {
+  if (temp >= 38) return '#7800a0'; // 紫 (極端高溫)
+  if (temp >= 35) return '#d60036'; // 深紅
+  if (temp >= 33) return '#f02800'; // 鮮紅
+  if (temp >= 31) return '#ff6e00'; // 橘紅 (西半部平原常態)
+  if (temp >= 29) return '#ffaa00'; // 暖橘
+  if (temp >= 27) return '#ffe600'; // 亮黃
+  if (temp >= 25) return '#d7ff00'; // 黃綠
+  if (temp >= 23) return '#80ff00'; // 鮮綠
+  if (temp >= 21) return '#00ff40'; // 翠綠
+  if (temp >= 19) return '#00ffbf'; // 青綠 (山區邊緣)
+  if (temp >= 17) return '#00d5ff'; // 淺青 (中海拔山區)
+  if (temp >= 15) return '#0088ff'; // 天藍
+  if (temp >= 13) return '#0033ff'; // 寶藍
+  if (temp >= 11) return '#0000d5'; // 深藍 (阿里山/玉山)
+  if (temp >= 9)  return '#0066aa'; // 鋼藍
+  if (temp >= 5)  return '#4dd0e1'; // 冰青
+  return '#006064'; // 極寒
+}
+
+function getPoPColor(pop) {
+  if (pop >= 80) return '#a855f7';
+  if (pop >= 60) return '#3b82f6';
+  if (pop >= 40) return '#06b6d4';
+  if (pop >= 20) return '#10b981';
+  return '#38bdf8';
+}
+
 function getWeatherVisuals(wxName, wxCode, slotIndex = 0) {
-  const isNight = slotIndex === 1; // 今晚明晨
+  const isNight = slotIndex === 1;
   let iconClass = "fa-solid fa-cloud-sun";
   let glyph = "🌤️";
   let theme = "sky-sunny";
-
   const code = parseInt(wxCode, 10);
 
-  if (code === 1) { // 晴天
+  if (code === 1) {
     iconClass = isNight ? "fa-solid fa-moon text-amber" : "fa-solid fa-sun text-amber";
     glyph = isNight ? "🌙" : "☀️";
     theme = isNight ? "sky-starry" : "sky-sunny";
-  } else if (code >= 2 && code <= 3) { // 晴時多雲、多雲時晴
+  } else if (code >= 2 && code <= 3) {
     iconClass = isNight ? "fa-solid fa-cloud-moon text-amber" : "fa-solid fa-cloud-sun text-amber";
     glyph = isNight ? "🌤️" : "⛅";
     theme = isNight ? "sky-starry" : "sky-sunny";
-  } else if (code >= 4 && code <= 7) { // 陰天、多雲
+  } else if (code >= 4 && code <= 7) {
     iconClass = "fa-solid fa-cloud text-slate";
     glyph = "☁️";
     theme = "sky-rainy";
-  } else if (code >= 8 && code <= 14) { // 短暫陣雨、陣雨
+  } else if (code >= 8 && code <= 14) {
     iconClass = "fa-solid fa-cloud-rain text-blue";
     glyph = "🌧️";
     theme = "sky-rainy";
-  } else if (code >= 15 && code <= 22) { // 雷雨
+  } else if (code >= 15 && code <= 22) {
     iconClass = "fa-solid fa-cloud-bolt text-amber";
     glyph = "⛈️";
     theme = "sky-rainy";
   } else {
-    // 根據文字判斷
     if (wxName.includes("雨")) {
       iconClass = "fa-solid fa-cloud-showers-heavy text-blue";
       glyph = "🌧️";
@@ -131,15 +195,10 @@ function getWeatherVisuals(wxName, wxCode, slotIndex = 0) {
   return { iconClass, glyph, theme };
 }
 
-// Format CWA Slot Label based on start/end hour
-function getSlotLabel(slotIndex, startTime, endTime) {
+function getSlotLabel(slotIndex) {
   if (slotIndex === 0) return "今日白天";
   if (slotIndex === 1) return "今晚明晨";
-  if (slotIndex === 2) return "明日白天";
-
-  const sHour = new Date(startTime.replace(/-/g, '/')).getHours();
-  if (sHour >= 6 && sHour < 18) return "白天預報";
-  return "夜間明晨";
+  return "明日白天";
 }
 
 function formatSlotTimeRange(startTime, endTime) {
@@ -153,7 +212,6 @@ function formatSlotTimeRange(startTime, endTime) {
   }
 }
 
-// Calculate AI Lifestyle Tips based on weather
 function generateLifestyleTips(forecast) {
   const currentSlot = forecast.slots[0] || {};
   const minT = currentSlot.minT || 24;
@@ -162,14 +220,12 @@ function generateLifestyleTips(forecast) {
   const pop = currentSlot.pop || 0;
   const wx = currentSlot.wx || "";
 
-  // 穿衣建議
   let clothes = "短袖棉質 + 隨身薄外套";
   if (avgT >= 30) clothes = "輕薄透氣短袖，避免深色厚重衣物";
   else if (avgT >= 24) clothes = "舒適 T-shirt 或短袖襯衫，早晚加薄開衫";
   else if (avgT >= 19) clothes = "長袖上衣、針織衫或風衣外套";
   else clothes = "禦寒厚外套、羽絨衣及毛帽圍巾";
 
-  // 雨具攜帶
   let umbrella = "降雨機率低，外出無需雨具";
   if (pop >= 60 || wx.includes("雨")) {
     umbrella = "降雨機率高，出門務必攜帶折傘或雨具";
@@ -177,7 +233,6 @@ function generateLifestyleTips(forecast) {
     umbrella = "天氣偶有局部陣雨，建議包包常備輕量折傘";
   }
 
-  // 紫外線建議
   let uv = "中量級 (中午時段建議遮陽帽)";
   if (wx.includes("晴") && avgT >= 28) {
     uv = "過量至危險級 (塗抹 SPF30+ 防曬乳、太陽眼鏡)";
@@ -185,7 +240,6 @@ function generateLifestyleTips(forecast) {
     uv = "微量級 (紫外線偏弱，適度戶外採光)";
   }
 
-  // 運動建議
   let activity = "極適宜戶外慢跑、健行或騎單車";
   if (pop >= 50 || wx.includes("雨")) {
     activity = "降雨路面濕滑，推薦室內健身、游泳或瑜珈";
@@ -196,12 +250,9 @@ function generateLifestyleTips(forecast) {
   return { clothes, umbrella, uv, activity, avgT };
 }
 
-// Air Quality Estimate based on County & Random micro-variance
 function getAQIInfo(countyName) {
   const conf = COUNTY_CONFIG[countyName] || {};
   const station = conf.aqiStation || countyName.slice(0, 2);
-  
-  // 基於真實地理環境的大致常態基準
   let baseAQI = 52;
   if (["高雄市", "臺南市", "雲林縣"].includes(countyName)) baseAQI = 75;
   else if (["花蓮縣", "臺東縣", "宜蘭縣", "連江縣"].includes(countyName)) baseAQI = 28;
@@ -244,13 +295,13 @@ async function fetchWeatherData() {
       throw new Error("API 資料結構不符");
     }
   } catch (err) {
-    console.warn("CWA API 即時獲取異常，切換至備援快照資料庫:", err);
+    console.warn("CWA API 即時獲取異常，切換至本機備援資料:", err);
     loadFallbackData();
     showToast("即時網路連線受限，已載入本機預存氣象快照！", "warning");
   } finally {
     if (refreshIcon) refreshIcon.classList.remove("fa-spin");
     renderCurrentCounty();
-    renderMapBadges();
+    updateMapDisplay();
     updateFavoritesUI();
   }
 }
@@ -258,7 +309,9 @@ async function fetchWeatherData() {
 function parseCWARecords(locations) {
   const map = {};
   locations.forEach(loc => {
-    const name = loc.locationName;
+    let name = loc.locationName;
+    if (name === "桃園縣") name = "桃園市";
+
     const elements = {};
     (loc.weatherElement || []).forEach(e => {
       elements[e.elementName] = e.time || [];
@@ -301,11 +354,9 @@ function parseCWARecords(locations) {
   state.weatherData = map;
 }
 
-// Fallback Snapshot if offline or API blocked
 function loadFallbackData() {
   const sampleCounties = Object.keys(COUNTY_CONFIG);
   const map = {};
-  const now = new Date();
 
   sampleCounties.forEach(name => {
     map[name] = {
@@ -336,7 +387,7 @@ function updateLastSyncTime() {
 }
 
 // ==============================================================================
-// UI RENDERING
+// UI RENDERING (LEFT HERO CARDS)
 // ==============================================================================
 function renderCurrentCounty() {
   const countyData = state.weatherData[state.currentCounty];
@@ -345,10 +396,8 @@ function renderCurrentCounty() {
   const currentSlot = countyData.slots[0] || {};
   const visuals = getWeatherVisuals(currentSlot.wx, currentSlot.wxCode, 0);
 
-  // Apply Atmospheric Sky Theme
   document.body.className = `${visuals.theme} ${state.isLightMode ? 'light-mode' : ''}`;
 
-  // Heading & Region
   const locNameElem = document.getElementById("currentLocationName");
   const regionTagElem = document.getElementById("currentRegionTag");
   const dateElem = document.getElementById("currentDateDisplay");
@@ -356,7 +405,6 @@ function renderCurrentCounty() {
   if (locNameElem) locNameElem.textContent = state.currentCounty;
   if (regionTagElem) regionTagElem.textContent = REGION_NAMES[countyData.region] || "臺灣本島";
 
-  // Date format
   if (dateElem) {
     const now = new Date();
     const days = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
@@ -366,10 +414,8 @@ function renderCurrentCounty() {
     dateElem.textContent = `${y}/${m}/${d} ${days[now.getDay()]}`;
   }
 
-  // Populate Townships Dropdown
   renderTownshipSelect();
 
-  // Metrics
   const avgTemp = Math.round((currentSlot.minT + currentSlot.maxT) / 2);
   const tempNumElem = document.getElementById("currentTempNum");
   const minTempElem = document.getElementById("currentMinTemp");
@@ -387,13 +433,12 @@ function renderCurrentCounty() {
   if (popElem) popElem.textContent = `${currentSlot.pop}%`;
   if (feelTempElem) feelTempElem.textContent = `${avgTemp + 1}°C`;
 
-  // Hero Weather Icon
   const heroIconStage = document.getElementById("heroWeatherIcon");
   if (heroIconStage) {
     heroIconStage.innerHTML = `<i class="${visuals.iconClass} weather-glyph"></i>`;
   }
 
-  // 36-Hour 3-Slot Forecast Cards (Matching Image 1)
+  // 36h 3-slot Forecast
   countyData.slots.forEach((slot, idx) => {
     const titleElem = document.getElementById(`slotTitle${idx}`);
     const timeElem = document.getElementById(`slotTime${idx}`);
@@ -402,7 +447,7 @@ function renderCurrentCounty() {
     const tempElem = document.getElementById(`slotTemp${idx}`);
     const popValElem = document.getElementById(`slotPoP${idx}`);
 
-    if (titleElem) titleElem.textContent = getSlotLabel(idx, slot.startTime, slot.endTime);
+    if (titleElem) titleElem.textContent = getSlotLabel(idx);
     if (timeElem) timeElem.textContent = formatSlotTimeRange(slot.startTime, slot.endTime);
     if (wxElem) wxElem.textContent = slot.wx;
     if (tempElem) tempElem.textContent = `${slot.minT}° - ${slot.maxT}°`;
@@ -412,7 +457,7 @@ function renderCurrentCounty() {
     if (iconElem) iconElem.innerHTML = `<i class="${slotVisuals.iconClass}"></i>`;
   });
 
-  // Air Quality Monitor (AQI)
+  // AQI
   const aqiInfo = getAQIInfo(state.currentCounty);
   const aqiStationElem = document.getElementById("aqiStationName");
   const aqiValueElem = document.getElementById("aqiValue");
@@ -427,7 +472,7 @@ function renderCurrentCounty() {
   }
   if (aqiProgressElem) aqiProgressElem.style.width = `${aqiInfo.pct}%`;
 
-  // Lifestyle Advisory
+  // Lifestyle
   const tips = generateLifestyleTips(countyData);
   const tipClothes = document.getElementById("tipClothes");
   const tipUmbrella = document.getElementById("tipUmbrella");
@@ -439,16 +484,13 @@ function renderCurrentCounty() {
   if (tipUV) tipUV.textContent = tips.uv;
   if (tipActivity) tipActivity.textContent = tips.activity;
 
-  // Favorite Button State
+  // Favorite button
   const favBtn = document.getElementById("favCurrentBtn");
   if (favBtn) {
     const isFav = state.favorites.includes(state.currentCounty);
     favBtn.classList.toggle("active", isFav);
     favBtn.innerHTML = isFav ? `<i class="fa-solid fa-heart"></i>` : `<i class="fa-regular fa-heart"></i>`;
   }
-
-  // Update SVG active polygon & Badges
-  highlightSelectedCountyOnMap();
 }
 
 function renderTownshipSelect() {
@@ -467,128 +509,401 @@ function renderTownshipSelect() {
 }
 
 // ==============================================================================
-// INTERACTIVE MAP RENDERING
+// LEAFLET GIS ENGINE WITH REAL DETAILED BOUNDARIES
 // ==============================================================================
-function renderMapBadges() {
-  const layer = document.getElementById("mapPinsLayer");
-  const islandList = document.getElementById("islandPinsList");
-  if (!layer || !islandList) return;
+function initLeafletMap() {
+  const mapContainer = document.getElementById("taiwanLeafletMap");
+  if (!mapContainer || state.leafletMap) return;
 
-  layer.innerHTML = "";
-  islandList.innerHTML = "";
+  // Center on Taiwan
+  const map = L.map("taiwanLeafletMap", {
+    center: [23.75, 120.95],
+    zoom: 7.4,
+    zoomSnap: 0.2,
+    zoomDelta: 0.5,
+    minZoom: 6,
+    maxZoom: 12,
+    attributionControl: false,
+    zoomControl: false,
+  });
 
-  Object.keys(COUNTY_CONFIG).forEach(countyName => {
-    const conf = COUNTY_CONFIG[countyName];
-    const data = state.weatherData[countyName];
-    if (!data) return;
+  // Zoom control top-left
+  L.control.zoom({ position: "topleft" }).addTo(map);
 
-    const currentSlot = data.slots[0] || {};
-    const avgT = Math.round((currentSlot.minT + currentSlot.maxT) / 2);
-    const visuals = getWeatherVisuals(currentSlot.wx, currentSlot.wxCode, 0);
+  // Basemap Tiles
+  setBasemapStyle(state.mapStyle, map);
 
-    // Offshore Islands go to the dedicated Inset panel for crystal clear readability
-    if (conf.region === "islands") {
-      const chip = document.createElement("div");
-      chip.className = `island-chip ${countyName === state.currentCounty ? 'selected' : ''}`;
-      chip.dataset.county = countyName;
-      chip.innerHTML = `
-        <span><strong>${countyName}</strong></span>
-        <span>${visuals.glyph} ${avgT}°C</span>
-      `;
-      chip.addEventListener("click", () => selectCounty(countyName));
-      islandList.appendChild(chip);
-      return;
-    }
+  state.leafletMap = map;
+  state.markersLayer = L.layerGroup().addTo(map);
 
-    // Mainland Counties: Positioned Vector Badges
-    const badge = document.createElement("div");
-    badge.className = `map-weather-badge ${countyName === state.currentCounty ? 'selected' : ''}`;
-    badge.dataset.county = countyName;
-    badge.style.left = `${conf.x}%`;
-    badge.style.top = `${conf.y}%`;
+  // Load Real High-Precision County Boundaries
+  loadGeoJSONBoundaries();
 
-    // Dynamic Content based on Map Mode
-    if (state.mapMode === "icon") {
-      badge.innerHTML = `
-        <span class="badge-pin-icon">${visuals.glyph}</span>
-        <span class="badge-pin-name">${countyName.slice(0, 2)}</span>
-        <span class="badge-pin-temp">${avgT}°</span>
-      `;
-    } else if (state.mapMode === "temp") {
-      badge.innerHTML = `
-        <span class="badge-pin-name">${countyName.slice(0, 2)}</span>
-        <span class="badge-pin-temp" style="font-size:0.9rem">${currentSlot.minT}~${currentSlot.maxT}°</span>
-      `;
-    } else if (state.mapMode === "pop") {
-      badge.innerHTML = `
-        <span class="badge-pin-name">${countyName.slice(0, 2)}</span>
-        <span class="badge-pin-temp" style="color:#38bdf8"><i class="fa-solid fa-droplet"></i> ${currentSlot.pop}%</span>
-      `;
-    }
+  // Initialize Wind Canvas Overlay (Image 1 effect)
+  initWindCanvas(map);
 
-    // Badge Hover & Click
-    badge.addEventListener("mouseenter", (e) => showMapHover(countyName, e));
-    badge.addEventListener("mouseleave", hideMapHover);
-    badge.addEventListener("click", () => selectCounty(countyName));
-
-    layer.appendChild(badge);
+  // Map click/zoom event listeners
+  map.on("zoomend moveend", () => {
+    if (state.windParticleCanvas) resizeWindCanvas();
   });
 }
 
-function highlightSelectedCountyOnMap() {
-  // Highlight polygon in SVG
-  document.querySelectorAll(".county-polygon").forEach(path => {
-    const county = path.dataset.county;
-    if (county === state.currentCounty) {
-      path.classList.add("active-county");
-    } else {
-      path.classList.remove("active-county");
-    }
-  });
+function setBasemapStyle(styleType, mapInstance = state.leafletMap) {
+  if (!mapInstance) return;
+  if (state.tileLayer) mapInstance.removeLayer(state.tileLayer);
 
-  // Highlight DOM Badges
-  document.querySelectorAll(".map-weather-badge").forEach(badge => {
-    badge.classList.toggle("selected", badge.dataset.county === state.currentCounty);
-  });
+  let tileUrl = "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png";
+  if (styleType === "satellite") {
+    tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+  }
 
-  // Highlight Island Chips
-  document.querySelectorAll(".island-chip").forEach(chip => {
-    chip.classList.toggle("selected", chip.dataset.county === state.currentCounty);
-  });
+  state.tileLayer = L.tileLayer(tileUrl, {
+    subdomains: "abcd",
+    maxZoom: 19
+  }).addTo(mapInstance);
 }
 
-function showMapHover(countyName, event) {
-  const hoverCard = document.getElementById("mapHoverCard");
+function loadGeoJSONBoundaries() {
+  if (!window.TAIWAN_COUNTIES_GEOJSON || !state.leafletMap) return;
+
+  if (state.geojsonLayer) {
+    state.leafletMap.removeLayer(state.geojsonLayer);
+  }
+
+  state.geojsonLayer = L.geoJSON(window.TAIWAN_COUNTIES_GEOJSON, {
+    style: feature => getCountyFeatureStyle(feature),
+    onEachFeature: (feature, layer) => {
+      let countyName = feature.properties.COUNTYNAME || feature.properties.name;
+      if (countyName === "桃園縣") countyName = "桃園市";
+
+      // Hover
+      layer.on("mouseover", (e) => {
+        const poly = e.target;
+        poly.setStyle({
+          weight: 2.8,
+          color: "#38bdf8",
+          fillOpacity: 0.65,
+        });
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+          poly.bringToFront();
+        }
+        showHoverPill(countyName);
+      });
+
+      layer.on("mouseout", (e) => {
+        state.geojsonLayer.resetStyle(e.target);
+        hideHoverPill();
+      });
+
+      // Click to select county
+      layer.on("click", () => {
+        selectCounty(countyName);
+      });
+    }
+  }).addTo(state.leafletMap);
+}
+
+function getCountyFeatureStyle(feature) {
+  let countyName = feature.properties.COUNTYNAME || feature.properties.name;
+  if (countyName === "桃園縣") countyName = "桃園市";
+
+  const isCurrent = countyName === state.currentCounty;
+  const countyData = state.weatherData[countyName];
+  const s0 = (countyData && countyData.slots[0]) || { minT: 24, maxT: 30, pop: 0 };
+  const avgT = Math.round((s0.minT + s0.maxT) / 2);
+
+  // Border & Color
+  let fillColor = "#1e293b";
+  let fillOpacity = 0.35;
+  let borderColor = "#ffffff";
+  let borderWidth = 1.3;
+
+  if (state.mapMode === "temp") {
+    // CWA Official Temperature Distribution Color (Image 2)
+    fillColor = getCWATemperatureColor(avgT);
+    fillOpacity = isCurrent ? 0.85 : 0.68;
+    borderColor = isCurrent ? "#ffffff" : "rgba(255, 255, 255, 0.75)";
+    borderWidth = isCurrent ? 2.5 : 1.2;
+  } else if (state.mapMode === "pop") {
+    // PoP Rain Probability Shading
+    fillColor = getPoPColor(s0.pop);
+    fillOpacity = isCurrent ? 0.75 : 0.55;
+    borderColor = "#ffffff";
+  } else if (state.mapMode === "wind") {
+    // Subtle translucent oceanic glass (Image 1)
+    fillColor = isCurrent ? "rgba(56, 189, 248, 0.4)" : "rgba(30, 48, 92, 0.28)";
+    fillOpacity = isCurrent ? 0.55 : 0.28;
+    borderColor = isCurrent ? "#38bdf8" : "rgba(255, 255, 255, 0.85)";
+    borderWidth = isCurrent ? 2.2 : 1.4;
+  } else {
+    // Icon mode
+    fillColor = isCurrent ? "#0284c7" : "#1e293b";
+    fillOpacity = isCurrent ? 0.6 : 0.32;
+    borderColor = isCurrent ? "#38bdf8" : "rgba(255, 255, 255, 0.6)";
+  }
+
+  return {
+    fillColor: fillColor,
+    weight: borderWidth,
+    opacity: 0.95,
+    color: borderColor,
+    fillOpacity: fillOpacity,
+  };
+}
+
+function updateMapDisplay() {
+  if (state.geojsonLayer) {
+    state.geojsonLayer.setStyle(f => getCountyFeatureStyle(f));
+  }
+
+  // Toggle Legend Bar visibility (Only in 'temp' mode)
+  const legendElem = document.getElementById("cwaTempLegend");
+  if (legendElem) {
+    legendElem.classList.toggle("visible", state.mapMode === "temp");
+  }
+
+  // Update Station and County Markers
+  renderMapMarkers();
+}
+
+function renderMapMarkers() {
+  if (!state.markersLayer || !state.leafletMap) return;
+  state.markersLayer.clearLayers();
+
+  if (state.mapMode === "temp" && state.showStationValues) {
+    // Render CWA Temperature Station Pins (Matching Image 2)
+    CWA_STATIONS.forEach(st => {
+      const cData = state.weatherData[st.county];
+      const s0 = (cData && cData.slots[0]) || { minT: 24, maxT: 30 };
+      const avgT = Math.round((s0.minT + s0.maxT) / 2);
+      const finalTemp = st.fixedTemp !== undefined ? st.fixedTemp : (avgT + st.tempOffset).toFixed(1);
+      const dotColor = getCWATemperatureColor(parseFloat(finalTemp));
+
+      const iconHtml = `
+        <div class="cwa-station-marker" title="${st.name} 氣溫測站: ${finalTemp}°C">
+          <div class="station-dot" style="background:${dotColor};"></div>
+          <span class="station-temp-tag">${finalTemp}</span>
+        </div>
+      `;
+
+      const markerIcon = L.divIcon({
+        className: "custom-station-pin",
+        html: iconHtml,
+        iconSize: [52, 20],
+        iconAnchor: [6, 10]
+      });
+
+      const m = L.marker([st.lat, st.lon], { icon: markerIcon });
+      m.on("click", () => selectCounty(st.county));
+      state.markersLayer.addLayer(m);
+    });
+  } else if (state.mapMode === "wind") {
+    // Render Major City Labels (Matching Image 1: 臺北, 臺中, 高雄, 澎湖, 連江...)
+    const mainCities = [
+      { name: "臺北", county: "臺北市", lat: 25.04, lon: 121.56 },
+      { name: "臺中", county: "臺中市", lat: 24.16, lon: 120.68 },
+      { name: "高雄", county: "高雄市", lat: 22.62, lon: 120.30 },
+      { name: "苗栗", county: "苗栗縣", lat: 24.56, lon: 120.82 },
+      { name: "宜蘭", county: "宜蘭縣", lat: 24.75, lon: 121.75 },
+      { name: "花蓮", county: "花蓮縣", lat: 23.99, lon: 121.61 },
+      { name: "臺東", county: "臺東縣", lat: 22.76, lon: 121.14 },
+      { name: "澎湖", county: "澎湖縣", lat: 23.57, lon: 119.58 },
+      { name: "金門", county: "金門縣", lat: 24.44, lon: 118.32 },
+      { name: "連江", county: "連江縣", lat: 26.15, lon: 119.95 },
+    ];
+
+    mainCities.forEach(ct => {
+      const isSelected = ct.county === state.currentCounty;
+      const iconHtml = `
+        <div class="cwa-station-marker ${isSelected ? 'selected' : ''}" style="cursor:pointer;">
+          <div class="station-dot" style="background:#e11d48; width:12px; height:12px;"></div>
+          <span class="station-temp-tag" style="background:#0f172a; font-weight:800; font-size:0.8rem; color:#fff;">${ct.name}</span>
+        </div>
+      `;
+
+      const markerIcon = L.divIcon({
+        className: "custom-city-pin",
+        html: iconHtml,
+        iconSize: [48, 20],
+        iconAnchor: [6, 10]
+      });
+
+      const m = L.marker([ct.lat, ct.lon], { icon: markerIcon });
+      m.on("click", () => selectCounty(ct.county));
+      state.markersLayer.addLayer(m);
+    });
+  } else {
+    // Icon / PoP Mode: 22 Counties Weather Badges
+    Object.keys(COUNTY_CONFIG).forEach(cName => {
+      const conf = COUNTY_CONFIG[cName];
+      const data = state.weatherData[cName];
+      if (!data) return;
+
+      const s0 = data.slots[0] || {};
+      const avgT = Math.round((s0.minT + s0.maxT) / 2);
+      const visuals = getWeatherVisuals(s0.wx, s0.wxCode, 0);
+      const isSelected = cName === state.currentCounty;
+
+      let badgeHtml = `
+        <div class="cwa-badge-marker ${isSelected ? 'selected' : ''}" title="${cName}: ${s0.wx}">
+          <span class="badge-icon">${visuals.glyph}</span>
+          <span class="badge-name">${cName.slice(0, 2)}</span>
+          <span class="badge-temp">${state.mapMode === 'pop' ? s0.pop + '%' : avgT + '°'}</span>
+        </div>
+      `;
+
+      const markerIcon = L.divIcon({
+        className: "custom-weather-badge",
+        html: badgeHtml,
+        iconSize: [75, 28],
+        iconAnchor: [37, 14]
+      });
+
+      const m = L.marker([conf.lat, conf.lon], { icon: markerIcon });
+      m.on("click", () => selectCounty(cName));
+      state.markersLayer.addLayer(m);
+    });
+  }
+}
+
+function showHoverPill(countyName) {
+  const badge = document.getElementById("mapHoverCountyBadge");
+  const title = document.getElementById("hoverCountyTitle");
+  const desc = document.getElementById("hoverCountyDesc");
+  if (!badge || !title || !desc) return;
+
   const data = state.weatherData[countyName];
-  if (!hoverCard || !data) return;
-
-  const currentSlot = data.slots[0] || {};
-  const visuals = getWeatherVisuals(currentSlot.wx, currentSlot.wxCode, 0);
-
-  document.getElementById("hoverCountyName").textContent = countyName;
-  document.getElementById("hoverRegionTag").textContent = REGION_NAMES[data.region] || "";
-  document.getElementById("hoverWxIcon").textContent = visuals.glyph;
-  document.getElementById("hoverTemp").textContent = `${currentSlot.minT}°C ~ ${currentSlot.maxT}°C`;
-  document.getElementById("hoverPoP").textContent = `${currentSlot.pop}%`;
-
-  hoverCard.classList.add("visible");
+  if (data) {
+    const s0 = data.slots[0] || {};
+    title.textContent = countyName;
+    desc.textContent = `${s0.wx} · ${s0.minT}°C ~ ${s0.maxT}°C · 降雨 ${s0.pop}%`;
+    badge.classList.add("visible");
+  }
 }
 
-function hideMapHover() {
-  const hoverCard = document.getElementById("mapHoverCard");
-  if (hoverCard) hoverCard.classList.remove("visible");
+function hideHoverPill() {
+  const badge = document.getElementById("mapHoverCountyBadge");
+  if (badge) badge.classList.remove("visible");
 }
 
 function selectCounty(countyName) {
   if (!state.weatherData[countyName]) return;
   state.currentCounty = countyName;
   state.currentTownship = (COUNTY_TOWNSHIPS[countyName] && COUNTY_TOWNSHIPS[countyName][0]) || countyName;
+
   renderCurrentCounty();
-  showToast(`已切換觀測縣市為：${countyName}`, "info");
+  updateMapDisplay();
+  showToast(`已切換至【${countyName}】，已同步全島氣象資訊`, "info");
 }
 
 // ==============================================================================
-// MODAL DIALOGS: 22 COUNTIES TABLE, RANKINGS, API DOCS
+// DYNAMIC WIND STREAMLINES ENGINE (Matching Image 1 Windy-style particles)
+// ==============================================================================
+let windParticles = [];
+const WIND_PARTICLE_COUNT = 160;
+
+function initWindCanvas(map) {
+  const canvas = document.getElementById("windParticleCanvas");
+  if (!canvas) return;
+
+  resizeWindCanvas();
+  window.addEventListener("resize", resizeWindCanvas);
+
+  // Initialize particles around Taiwan ocean & strait bounds
+  windParticles = [];
+  for (let i = 0; i < WIND_PARTICLE_COUNT; i++) {
+    windParticles.push(createRandomWindParticle());
+  }
+
+  // Animation Loop
+  cancelAnimationFrame(state.windAnimationId);
+  animateWindFlow();
+}
+
+function resizeWindCanvas() {
+  const canvas = document.getElementById("windParticleCanvas");
+  const wrapper = document.querySelector(".map-stage-wrapper");
+  if (!canvas || !wrapper) return;
+
+  canvas.width = wrapper.clientWidth;
+  canvas.height = wrapper.clientHeight;
+}
+
+function createRandomWindParticle() {
+  // Taiwan geographic bounding box with ocean
+  const minLat = 21.0, maxLat = 26.8;
+  const minLon = 118.0, maxLon = 124.0;
+  return {
+    lat: minLat + Math.random() * (maxLat - minLat),
+    lon: minLon + Math.random() * (maxLon - minLon),
+    speed: 0.025 + Math.random() * 0.035, // geo degrees per frame
+    age: Math.floor(Math.random() * 80),
+    maxAge: 70 + Math.floor(Math.random() * 50),
+    length: 12 + Math.random() * 10
+  };
+}
+
+function animateWindFlow() {
+  const canvas = document.getElementById("windParticleCanvas");
+  const map = state.leafletMap;
+
+  if (canvas && map && state.enableWindAnimation) {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = "round";
+
+    windParticles.forEach(p => {
+      p.age++;
+      if (p.age > p.maxAge) {
+        Object.assign(p, createRandomWindParticle());
+        p.age = 0;
+      }
+
+      // Wind vector: flowing from SW to NE with deflection through the Taiwan Strait
+      const baseAngle = 0.72; // ~41 degrees North-East
+      const straitEffect = (p.lon > 119.5 && p.lon < 121.2) ? 0.15 : 0; // Accelerate through strait
+      const angle = baseAngle + straitEffect + Math.sin(p.lat * 4) * 0.08;
+
+      const prevLat = p.lat;
+      const prevLon = p.lon;
+
+      p.lat += Math.sin(angle) * p.speed;
+      p.lon += Math.cos(angle) * p.speed * 1.1;
+
+      // Project geo coordinates to canvas pixels
+      const pt1 = map.latLngToContainerPoint([prevLat, prevLon]);
+      const pt2 = map.latLngToContainerPoint([p.lat, p.lon]);
+
+      // Calculate tail point
+      const dx = pt2.x - pt1.x;
+      const dy = pt2.y - pt1.y;
+      const tailX = pt2.x - dx * 3.5;
+      const tailY = pt2.y - dy * 3.5;
+
+      const progress = p.age / p.maxAge;
+      const alpha = Math.sin(progress * Math.PI) * 0.85;
+
+      // Radiant white / cyan particle trail (Matching Image 1)
+      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+      ctx.shadowColor = "#38bdf8";
+      ctx.shadowBlur = 4;
+
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(pt2.x, pt2.y);
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+    });
+  }
+
+  state.windAnimationId = requestAnimationFrame(animateWindFlow);
+}
+
+// ==============================================================================
+// MODAL DIALOGS: 22 COUNTIES TABLE & RANKINGS
 // ==============================================================================
 function populateOverviewTable(filterText = "") {
   const tbody = document.getElementById("allCountiesTableBody");
@@ -597,7 +912,7 @@ function populateOverviewTable(filterText = "") {
   tbody.innerHTML = "";
   const list = Object.keys(state.weatherData).filter(name => {
     if (!filterText) return true;
-    return name.includes(filterText) || REGION_NAMES[state.weatherData[name].region].includes(filterText);
+    return name.includes(filterText) || (REGION_NAMES[state.weatherData[name].region] || "").includes(filterText);
   });
 
   list.forEach(name => {
@@ -610,7 +925,7 @@ function populateOverviewTable(filterText = "") {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><strong>${name}</strong></td>
-      <td><span class="region-pill">${REGION_NAMES[data.region]}</span></td>
+      <td><span class="region-pill">${REGION_NAMES[data.region] || '臺灣'}</span></td>
       <td>${v0.glyph} ${s0.wx}</td>
       <td>${s0.minT}° ~ ${s0.maxT}°C</td>
       <td>${s1.minT}° ~ ${s1.maxT}°C</td>
@@ -647,7 +962,6 @@ function populateRankings() {
     };
   });
 
-  // Top Hot (Highest MaxT)
   const sortedHot = [...items].sort((a, b) => b.maxT - a.maxT).slice(0, 5);
   sortedHot.forEach((item, idx) => {
     const div = document.createElement("div");
@@ -669,7 +983,6 @@ function populateRankings() {
     hotList.appendChild(div);
   });
 
-  // Top Cold (Lowest MinT)
   const sortedCold = [...items].sort((a, b) => a.minT - b.minT).slice(0, 5);
   sortedCold.forEach((item, idx) => {
     const div = document.createElement("div");
@@ -707,7 +1020,7 @@ function closeModal(modalId) {
 }
 
 // ==============================================================================
-// GPS GEOLOCATION & CLOSEST COUNTY MATCHING
+// GPS GEOLOCATION
 // ==============================================================================
 function handleGPSLocate() {
   if (!navigator.geolocation) {
@@ -721,7 +1034,7 @@ function handleGPSLocate() {
     pos => {
       const uLat = pos.coords.latitude;
       const uLon = pos.coords.longitude;
-      let closestCounty = "臺北市";
+      let closestCounty = "苗栗縣";
       let minDist = Infinity;
 
       Object.keys(COUNTY_CONFIG).forEach(cName => {
@@ -734,6 +1047,9 @@ function handleGPSLocate() {
       });
 
       selectCounty(closestCounty);
+      if (state.leafletMap) {
+        state.leafletMap.flyTo([uLat, uLon], 8.5, { duration: 1.2 });
+      }
       showToast(`GPS 定位成功！已為您切換至距離最近的【${closestCounty}】`, "success");
     },
     err => {
@@ -744,7 +1060,7 @@ function handleGPSLocate() {
 }
 
 // ==============================================================================
-// FAVORITES SYSTEM
+// FAVORITES & SOUND
 // ==============================================================================
 function toggleFavoriteCurrent() {
   const cName = state.currentCounty;
@@ -766,9 +1082,6 @@ function updateFavoritesUI() {
   if (countElem) countElem.textContent = state.favorites.length;
 }
 
-// ==============================================================================
-// AMBIENT SOUND SYNTHESIZER (Web Audio API)
-// ==============================================================================
 function toggleAmbientSound() {
   const icon = document.getElementById("soundIcon");
   if (state.isSoundPlaying) {
@@ -790,7 +1103,6 @@ function startAmbientSound() {
     if (!state.audioCtx) state.audioCtx = new AudioContext();
     if (state.audioCtx.state === 'suspended') state.audioCtx.resume();
 
-    // Create pink noise buffer for soft rain/wind breeze
     const bufferSize = state.audioCtx.sampleRate * 2;
     const noiseBuffer = state.audioCtx.createBuffer(1, bufferSize, state.audioCtx.sampleRate);
     const output = noiseBuffer.getChannelData(0);
@@ -811,12 +1123,10 @@ function startAmbientSound() {
     whiteNoise.buffer = noiseBuffer;
     whiteNoise.loop = true;
 
-    // Filter
     const filter = state.audioCtx.createBiquadFilter();
     filter.type = "lowpass";
     filter.frequency.setValueAtTime(800, state.audioCtx.currentTime);
 
-    // Gain
     const gainNode = state.audioCtx.createGain();
     gainNode.gain.setValueAtTime(0.08, state.audioCtx.currentTime);
 
@@ -827,7 +1137,7 @@ function startAmbientSound() {
     whiteNoise.start(0);
     state.audioNodes = { whiteNoise, gainNode };
   } catch (err) {
-    console.error("Audio Synthesis error:", err);
+    console.error("Audio error:", err);
   }
 }
 
@@ -840,16 +1150,12 @@ function stopAmbientSound() {
   }
 }
 
-// ==============================================================================
-// TOAST NOTIFICATIONS
-// ==============================================================================
 function showToast(message, type = "info") {
   const container = document.getElementById("toastContainer");
   if (!container) return;
 
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
-  
   let icon = "fa-solid fa-circle-info text-primary";
   if (type === "success") icon = "fa-solid fa-circle-check text-emerald";
   if (type === "warning") icon = "fa-solid fa-triangle-exclamation text-amber";
@@ -868,7 +1174,6 @@ function showToast(message, type = "info") {
 // EVENT LISTENERS INITIALIZATION
 // ==============================================================================
 function setupEventListeners() {
-  // Search Bar
   const searchInput = document.getElementById("countySearchInput");
   const clearBtn = document.getElementById("clearSearchBtn");
 
@@ -878,24 +1183,13 @@ function setupEventListeners() {
       if (clearBtn) clearBtn.style.display = q ? "block" : "none";
       if (!q) return;
 
-      // Find matching county or township
       const matchedCounty = Object.keys(COUNTY_CONFIG).find(name => {
         if (name.includes(q)) return true;
         const ts = COUNTY_TOWNSHIPS[name] || [];
         return ts.some(t => t.includes(q));
       });
 
-      if (matchedCounty) {
-        selectCounty(matchedCounty);
-      }
-    });
-
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const q = searchInput.value.trim();
-        const matched = Object.keys(COUNTY_CONFIG).find(name => name.includes(q));
-        if (matched) selectCounty(matched);
-      }
+      if (matchedCounty) selectCounty(matchedCounty);
     });
   }
 
@@ -906,19 +1200,16 @@ function setupEventListeners() {
     });
   }
 
-  // Geolocation Button
+  // Geolocation & Controls
   const geoBtn = document.getElementById("geoLocateBtn");
   if (geoBtn) geoBtn.addEventListener("click", handleGPSLocate);
 
-  // Refresh Button
   const refreshBtn = document.getElementById("refreshDataBtn");
   if (refreshBtn) refreshBtn.addEventListener("click", fetchWeatherData);
 
-  // Sound Button
   const soundBtn = document.getElementById("ambientSoundBtn");
   if (soundBtn) soundBtn.addEventListener("click", toggleAmbientSound);
 
-  // Theme Toggle Button
   const themeBtn = document.getElementById("themeToggleBtn");
   const themeIcon = document.getElementById("themeIcon");
   if (themeBtn) {
@@ -932,7 +1223,7 @@ function setupEventListeners() {
     });
   }
 
-  // Region Navigation Tabs
+  // Region tabs
   document.querySelectorAll(".region-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".region-tab").forEach(t => t.classList.remove("active"));
@@ -941,11 +1232,8 @@ function setupEventListeners() {
       state.currentRegionFilter = region;
 
       if (region === "favorites") {
-        if (state.favorites.length > 0) {
-          selectCounty(state.favorites[0]);
-        } else {
-          showToast("您尚未收藏任何縣市，請點擊愛心圖示新增！", "info");
-        }
+        if (state.favorites.length > 0) selectCounty(state.favorites[0]);
+        else showToast("您尚未收藏任何縣市，請點擊愛心圖示新增！", "info");
       } else if (region !== "all") {
         const firstInRegion = Object.keys(COUNTY_CONFIG).find(c => COUNTY_CONFIG[c].region === region);
         if (firstInRegion) selectCounty(firstInRegion);
@@ -953,7 +1241,7 @@ function setupEventListeners() {
     });
   });
 
-  // Township Dropdown Change
+  // Township selector
   const townshipSelect = document.getElementById("townshipSelect");
   if (townshipSelect) {
     townshipSelect.addEventListener("change", (e) => {
@@ -962,35 +1250,88 @@ function setupEventListeners() {
     });
   }
 
-  // Favorite Toggle
+  // Favorite button
   const favBtn = document.getElementById("favCurrentBtn");
   if (favBtn) favBtn.addEventListener("click", toggleFavoriteCurrent);
 
-  // Map Mode Switchers
+  // Map Mode Switchers (wind / temp / icon / pop)
   document.querySelectorAll(".map-mode-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".map-mode-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       state.mapMode = btn.dataset.mode;
-      renderMapBadges();
+      updateMapDisplay();
+
+      if (state.mapMode === "wind") {
+        showToast("已切換至【效果一：動態流體風場模式】(Wind Streamlines)", "success");
+      } else if (state.mapMode === "temp") {
+        showToast("已切換至【效果二：氣象署官方 溫度分布熱圖】(CWA Heatmap)", "success");
+      }
     });
   });
 
-  // SVG Paths Click
-  document.querySelectorAll(".county-polygon").forEach(path => {
-    path.addEventListener("click", () => {
-      const c = path.dataset.county;
-      if (c) selectCounty(c);
+  // Switches: Show Values & Wind Flow Animation
+  const toggleShowValues = document.getElementById("toggleShowValues");
+  if (toggleShowValues) {
+    toggleShowValues.addEventListener("change", (e) => {
+      state.showStationValues = e.target.checked;
+      renderMapMarkers();
     });
-  });
-
-  // Reset Map View
-  const resetBtn = document.getElementById("resetMapSelectionBtn");
-  if (resetBtn) {
-    resetBtn.addEventListener("click", () => selectCounty("苗栗縣"));
   }
 
-  // Modals Open
+  const toggleWindFlow = document.getElementById("toggleWindFlow");
+  if (toggleWindFlow) {
+    toggleWindFlow.addEventListener("change", (e) => {
+      state.enableWindAnimation = e.target.checked;
+      const canvas = document.getElementById("windParticleCanvas");
+      if (canvas) canvas.style.display = e.target.checked ? "block" : "none";
+    });
+  }
+
+  // Basemap style toggles (dark / satellite)
+  const btnStyleDark = document.getElementById("btnStyleDark");
+  const btnStyleSat = document.getElementById("btnStyleSat");
+  if (btnStyleDark && btnStyleSat) {
+    btnStyleDark.addEventListener("click", () => {
+      btnStyleDark.classList.add("active");
+      btnStyleSat.classList.remove("active");
+      state.mapStyle = "dark";
+      setBasemapStyle("dark");
+    });
+
+    btnStyleSat.addEventListener("click", () => {
+      btnStyleSat.classList.add("active");
+      btnStyleDark.classList.remove("active");
+      state.mapStyle = "satellite";
+      setBasemapStyle("satellite");
+    });
+  }
+
+  // Offshore islands quick navigation
+  document.querySelectorAll(".island-jump-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const c = btn.dataset.county;
+      if (c && COUNTY_CONFIG[c]) {
+        selectCounty(c);
+        if (state.leafletMap) {
+          state.leafletMap.flyTo([COUNTY_CONFIG[c].lat, COUNTY_CONFIG[c].lon], 9, { duration: 1.0 });
+        }
+      }
+    });
+  });
+
+  // Reset map view
+  const resetBtn = document.getElementById("resetMapSelectionBtn");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      selectCounty("苗栗縣");
+      if (state.leafletMap) {
+        state.leafletMap.flyTo([23.75, 120.95], 7.4, { duration: 1.0 });
+      }
+    });
+  }
+
+  // Modals
   const openOverviewBtn = document.getElementById("openOverviewModalBtn");
   if (openOverviewBtn) openOverviewBtn.addEventListener("click", () => openModal("overviewModal"));
 
@@ -1000,7 +1341,6 @@ function setupEventListeners() {
   const openApiDocBtn = document.getElementById("openApiDocModalBtn");
   if (openApiDocBtn) openApiDocBtn.addEventListener("click", () => openModal("apiDocModal"));
 
-  // Modals Close
   const closeOverviewBtn = document.getElementById("closeOverviewModalBtn");
   if (closeOverviewBtn) closeOverviewBtn.addEventListener("click", () => closeModal("overviewModal"));
 
@@ -1010,14 +1350,12 @@ function setupEventListeners() {
   const closeApiDocBtn = document.getElementById("closeApiDocModalBtn");
   if (closeApiDocBtn) closeApiDocBtn.addEventListener("click", () => closeModal("apiDocModal"));
 
-  // Close modal when clicking backdrop
   document.querySelectorAll(".custom-modal-backdrop").forEach(modal => {
     modal.addEventListener("click", (e) => {
       if (e.target === modal) modal.classList.remove("open");
     });
   });
 
-  // Modal Table Search Filter
   const modalFilter = document.getElementById("modalCountyFilter");
   if (modalFilter) {
     modalFilter.addEventListener("input", (e) => {
@@ -1031,5 +1369,6 @@ function setupEventListeners() {
 // ==============================================================================
 document.addEventListener("DOMContentLoaded", () => {
   setupEventListeners();
+  initLeafletMap();
   fetchWeatherData();
 });
