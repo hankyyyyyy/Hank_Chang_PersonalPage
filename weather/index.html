@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
   
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260924_zoom_ultra">
 </head>
 <body class="theme-dynamic">
   <!-- Dynamic Atmospheric Background -->
@@ -414,6 +414,13 @@
               <button class="style-toggle-btn" data-style="emap" id="btnStyleEmap" title="臺灣通用電子地圖 (國土測繪中心，超大放大至街道巷弄)"><i class="fa-solid fa-road"></i> 街區地圖</button>
               <button class="style-toggle-btn" data-style="ocean" id="btnStyleOcean" title="深邃海圖與等深線"><i class="fa-solid fa-water"></i> 海洋等深</button>
               <button class="style-toggle-btn" data-style="satellite" id="btnStyleSat" title="高解析真實衛星 (可放大看清農田建築)"><i class="fa-solid fa-satellite"></i> 衛星影像</button>
+            </div>
+            <!-- Quick Ultra Zoom Shortcuts -->
+            <div class="map-quick-zoom-toolbar">
+              <span class="zoom-level-pill" id="zoomLevelDisplay">縮放: Lv 7.4 / 最大19</span>
+              <button class="zoom-shortcut-btn" id="btnZoomStreet" title="快速超大放大至街廓 (Zoom 16)"><i class="fa-solid fa-magnifying-glass-plus"></i> 街廓級 (Lv 16)</button>
+              <button class="zoom-shortcut-btn" id="btnZoomUltra" title="超大極限特寫 (Zoom 18)"><i class="fa-solid fa-crosshairs"></i> 極限超大 (Lv 18.5)</button>
+              <button class="zoom-shortcut-btn" id="btnZoomReset" title="重設回全島全景 (Zoom 7.4)"><i class="fa-solid fa-compress"></i> 全島視角</button>
             </div>
           </div>
 
@@ -883,9 +890,9 @@ python weather_db.py</code></pre>
 
   <!-- Leaflet GIS Map & High-Precision Taiwan Counties GeoJSON -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-  <script src="taiwan_counties_data.js"></script>
+  <script src="taiwan_counties_data.js?v=20260924_zoom_ultra"></script>
   
   <!-- Main JavaScript Logic -->
-  <script src="app.js"></script>
+  <script src="app.js?v=20260924_zoom_ultra"></script>
 </body>
 </html>

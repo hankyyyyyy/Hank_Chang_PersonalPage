@@ -519,12 +519,15 @@ function initLeafletMap() {
   const map = L.map("taiwanLeafletMap", {
     center: [23.75, 120.95],
     zoom: 7.4,
-    zoomSnap: 0.2,
-    zoomDelta: 0.5,
+    zoomSnap: 0.25,
+    zoomDelta: 1, // 增強滾輪縮放靈敏度
+    wheelPxPerZoomLevel: 60,
     minZoom: 5.5,
-    maxZoom: 19, // 支援超大放大至街廓與山峰
+    maxZoom: 20, // 支援超大放大至 20 級 (看到街道、巷弄與門牌建物)
     attributionControl: false,
     zoomControl: false,
+    doubleClickZoom: true,
+    scrollWheelZoom: true,
   });
 
   // Zoom control top-left
@@ -543,12 +546,22 @@ function initLeafletMap() {
   initWindCanvas(map);
 
   // Map click/zoom event listeners: auto-adjust polygon opacity and wind canvas
+  const updateZoomDisplay = () => {
+    const el = document.getElementById("zoomLevelDisplay");
+    if (el) {
+      el.textContent = `縮放: Lv ${map.getZoom().toFixed(1)} / 最大20`;
+    }
+  };
+
+  map.on("zoom", updateZoomDisplay);
   map.on("zoomend moveend", () => {
+    updateZoomDisplay();
     if (state.windParticleCanvas) resizeWindCanvas();
     if (state.geojsonLayer) {
       state.geojsonLayer.setStyle(f => getCountyFeatureStyle(f));
     }
   });
+  updateZoomDisplay();
 }
 
 function setBasemapStyle(styleType, mapInstance = state.leafletMap) {
@@ -557,13 +570,13 @@ function setBasemapStyle(styleType, mapInstance = state.leafletMap) {
 
   let tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}";
   let nativeZ = 13;
-  let maxZ = 19;
+  let maxZ = 20;
 
   if (styleType === "topo") {
-    // 真實等高線起伏陰影地形 (Shaded Relief & Elevation Contours) - 平滑插值放大至 19 級
+    // 真實等高線起伏陰影地形 (Shaded Relief & Elevation Contours) - 平滑插值放大至 20 級
     tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}";
     nativeZ = 13;
-    maxZ = 19;
+    maxZ = 20;
   } else if (styleType === "emap") {
     // 臺灣通用電子地圖 (內政部國土測繪中心 NLSC EMAP) - 支援超大放大至 20 級 (看到街道、巷弄與門牌建物)
     tileUrl = "https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}";
@@ -573,12 +586,12 @@ function setBasemapStyle(styleType, mapInstance = state.leafletMap) {
     // 深邃海圖與海洋深度等深線 (World Ocean Base)
     tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}";
     nativeZ = 13;
-    maxZ = 19;
+    maxZ = 20;
   } else if (styleType === "satellite") {
-    // 高解析真實衛星影像 - 支援縮放到 19 級 (看到農田與建築物細節)
+    // 高解析真實衛星影像 - 支援縮放到 20 級 (看到農田與建築物細節)
     tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
     nativeZ = 19;
-    maxZ = 19;
+    maxZ = 20;
   }
 
   state.tileLayer = L.tileLayer(tileUrl, {
@@ -1491,6 +1504,40 @@ function setupEventListeners() {
       if (state.leafletMap) {
         state.leafletMap.flyTo([23.75, 120.95], 7.4, { duration: 1.0 });
       }
+    });
+  }
+
+  // Quick Zoom Toolbar Shortcuts (Street Level 16, Ultra Level 18.5, Island Level 7.4)
+  const btnZoomStreet = document.getElementById("btnZoomStreet");
+  if (btnZoomStreet) {
+    btnZoomStreet.addEventListener("click", () => {
+      if (!state.leafletMap) return;
+      const targetLatLng = (COUNTY_CONFIG[state.currentCounty]) 
+        ? [COUNTY_CONFIG[state.currentCounty].lat, COUNTY_CONFIG[state.currentCounty].lon] 
+        : state.leafletMap.getCenter();
+      state.leafletMap.flyTo(targetLatLng, 16, { duration: 1.2 });
+      showToast(`已縮放至【街廓級 (Lv 16)】- 清晰檢視${state.currentCounty}街道與建築`, "info");
+    });
+  }
+
+  const btnZoomUltra = document.getElementById("btnZoomUltra");
+  if (btnZoomUltra) {
+    btnZoomUltra.addEventListener("click", () => {
+      if (!state.leafletMap) return;
+      const targetLatLng = (COUNTY_CONFIG[state.currentCounty]) 
+        ? [COUNTY_CONFIG[state.currentCounty].lat, COUNTY_CONFIG[state.currentCounty].lon] 
+        : state.leafletMap.getCenter();
+      state.leafletMap.flyTo(targetLatLng, 18.5, { duration: 1.5 });
+      showToast(`已縮放至【極限超大 (Lv 18.5)】- 巷弄門牌與地形細節`, "info");
+    });
+  }
+
+  const btnZoomReset = document.getElementById("btnZoomReset");
+  if (btnZoomReset) {
+    btnZoomReset.addEventListener("click", () => {
+      if (!state.leafletMap) return;
+      state.leafletMap.flyTo([23.75, 120.95], 7.4, { duration: 1.0 });
+      showToast(`已重設為【全島視角 (Lv 7.4)】`, "info");
     });
   }
 

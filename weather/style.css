@@ -2631,3 +2631,48 @@ body.light-mode .map-hover-card {
   flex-direction: column;
   gap: 0.6rem;
 }
+
+/* Quick Zoom Toolbar */
+.map-quick-zoom-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+
+.zoom-level-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-family: monospace;
+}
+
+.zoom-shortcut-btn {
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.zoom-shortcut-btn:hover {
+  background: var(--primary);
+  color: #0b1329;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
