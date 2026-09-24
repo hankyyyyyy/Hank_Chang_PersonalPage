@@ -521,8 +521,8 @@ function initLeafletMap() {
     zoom: 7.4,
     zoomSnap: 0.2,
     zoomDelta: 0.5,
-    minZoom: 6,
-    maxZoom: 12,
+    minZoom: 5.5,
+    maxZoom: 19, // 支援超大放大至街廓與山峰
     attributionControl: false,
     zoomControl: false,
   });
@@ -542,9 +542,12 @@ function initLeafletMap() {
   // Initialize Wind Canvas Overlay (Image 1 effect)
   initWindCanvas(map);
 
-  // Map click/zoom event listeners
+  // Map click/zoom event listeners: auto-adjust polygon opacity and wind canvas
   map.on("zoomend moveend", () => {
     if (state.windParticleCanvas) resizeWindCanvas();
+    if (state.geojsonLayer) {
+      state.geojsonLayer.setStyle(f => getCountyFeatureStyle(f));
+    }
   });
 }
 
@@ -553,21 +556,33 @@ function setBasemapStyle(styleType, mapInstance = state.leafletMap) {
   if (state.tileLayer) mapInstance.removeLayer(state.tileLayer);
 
   let tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}";
-  let maxZ = 13;
+  let nativeZ = 13;
+  let maxZ = 19;
 
   if (styleType === "topo") {
-    // 真實等高線起伏陰影地形 (Shaded Relief & Elevation Contours) - 無任何浮水印
+    // 真實等高線起伏陰影地形 (Shaded Relief & Elevation Contours) - 平滑插值放大至 19 級
     tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}";
+    nativeZ = 13;
+    maxZ = 19;
+  } else if (styleType === "emap") {
+    // 臺灣通用電子地圖 (內政部國土測繪中心 NLSC EMAP) - 支援超大放大至 20 級 (看到街道、巷弄與門牌建物)
+    tileUrl = "https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}";
+    nativeZ = 20;
+    maxZ = 20;
   } else if (styleType === "ocean") {
-    // 深邃海圖與海洋深度等深線 (World Ocean Base) - 無任何浮水印
+    // 深邃海圖與海洋深度等深線 (World Ocean Base)
     tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}";
+    nativeZ = 13;
+    maxZ = 19;
   } else if (styleType === "satellite") {
-    // 高解析真實衛星影像 - 無任何浮水印
+    // 高解析真實衛星影像 - 支援縮放到 19 級 (看到農田與建築物細節)
     tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-    maxZ = 18;
+    nativeZ = 19;
+    maxZ = 19;
   }
 
   state.tileLayer = L.tileLayer(tileUrl, {
+    maxNativeZoom: nativeZ,
     maxZoom: maxZ,
     attribution: ""
   }).addTo(mapInstance);
@@ -682,6 +697,14 @@ function getCountyFeatureStyle(feature) {
     fillOpacity = isCurrent ? 0.6 : 0.32;
     borderColor = isCurrent ? "#38bdf8" : "rgba(255, 255, 255, 0.6)";
   }
+
+  // Auto-Fade Fill Opacity on deep zoom so streets, terrain and landmarks remain clear!
+  const currentZoom = state.leafletMap ? state.leafletMap.getZoom() : 7.4;
+  let zoomFade = 1.0;
+  if (currentZoom > 9.5) {
+    zoomFade = Math.max(0.08, 1 - (currentZoom - 9.5) * 0.22);
+  }
+  fillOpacity = fillOpacity * zoomFade;
 
   return {
     fillColor: fillColor,
@@ -1423,9 +1446,10 @@ function setupEventListeners() {
     });
   }
 
-  // Basemap style toggles (topo / ocean / satellite)
+  // Basemap style toggles (topo / emap / ocean / satellite)
   const styleButtons = [
     { id: "btnStyleTopo", style: "topo", name: "真實等高線起伏地形" },
+    { id: "btnStyleEmap", style: "emap", name: "臺灣通用電子地圖 (國土測繪中心)" },
     { id: "btnStyleOcean", style: "ocean", name: "海洋深度等深線海圖" },
     { id: "btnStyleSat", style: "satellite", name: "高解析真實衛星影像" }
   ];
