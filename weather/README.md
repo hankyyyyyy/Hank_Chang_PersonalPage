@@ -3,9 +3,18 @@
 > 國立中興大學 電機工程學系 (NCHU EE) | Hank Chang (張佑維)  
 > 遵循「**From Idea to Code - Vibe Coding AI 協作開發流程**」實作之氣象預報系統
 
+[![Live Demo](https://img.shields.io/badge/線上體驗網址-點此立即前往-success?style=for-the-badge&logo=google-chrome&logoColor=white)](https://hankyyyyyy.github.io/HW10-Taiwan-Weather/)
+[![Personal Portfolio](https://img.shields.io/badge/作者個人作品集-點此造訪-blueviolet?style=for-the-badge&logo=safari&logoColor=white)](https://hankyyyyyy.github.io/Hank_Chang_PersonalPage/)
+
 [![GitHub repo](https://img.shields.io/badge/GitHub-HW10--Taiwan--Weather-blue?logo=github)](https://github.com/hankyyyyyy/HW10-Taiwan-Weather)
 [![API](https://img.shields.io/badge/Data-中央氣象署_CWA_OpenData-0284c7)](https://opendata.cwa.gov.tw/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+### 🌐 線上即時體驗網址 (Live Demo Website)
+👉 **[https://hankyyyyyy.github.io/HW10-Taiwan-Weather/](https://hankyyyyyy.github.io/HW10-Taiwan-Weather/)**
+
+- 👤 **Hank Chang 個人作品集**：[https://hankyyyyyy.github.io/Hank_Chang_PersonalPage/](https://hankyyyyyy.github.io/Hank_Chang_PersonalPage/)
+- 💻 **GitHub 原始碼儲存庫**：[https://github.com/hankyyyyyy/HW10-Taiwan-Weather](https://github.com/hankyyyyyy/HW10-Taiwan-Weather)
 
 ---
 

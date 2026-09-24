@@ -393,14 +393,54 @@
           </div>
 
           <div class="project-footer">
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+            <a href="https://github.com/hankyyyyyy" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
               <svg viewBox="0 0 24 24" fill="currentColor" class="btn-icon">
                 <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
               </svg>
               <span>GitHub 原始碼</span>
             </a>
-            <a href="./weather/index.html" target="_blank" class="btn btn-primary btn-sm" style="background:#0284c7;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;">
-              <span>🌤️ 開啟全台即時氣象系統</span>
+            <button class="btn btn-ghost btn-sm demo-toast-btn" data-project="IoT 智慧校園微環境監測站">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              <span>專案詳情</span>
+            </button>
+          </div>
+        </article>
+
+        <!-- 專案 4: 臺灣即時氣象系統 (旗艦專案) -->
+        <article class="project-card glass-card featured-project-card" style="border:1px solid rgba(56, 189, 248, 0.4); background:linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(15, 23, 42, 0.8));">
+          <div class="project-header">
+            <span class="project-badge badge-featured" style="background:#0284c7; color:#fff;">熱門旗艦 · LIVE</span>
+            <span class="project-year">2026</span>
+          </div>
+
+          <h3 class="project-title" style="color:#38bdf8;">臺灣即時氣象與 36 小時預報地圖系統</h3>
+          <p class="project-subtitle">Taiwan Weather Hub (CWA API · GIS · 8大圖資)</p>
+
+          <p class="project-desc">
+            串接中央氣象署 OpenData API (F-C0032-001)，結合 Leaflet 22 縣市高精向量圖資、真實等高線地形與國土測繪街區地圖（支援超大 Zoom In）、動態流體風場、官方溫度熱圖及 8 大專業觀測圖資專區。
+          </p>
+
+          <div class="tech-stack-list">
+            <span class="tech-tag">HTML5 / CSS3</span>
+            <span class="tech-tag">JavaScript (ES6+)</span>
+            <span class="tech-tag">Leaflet GIS</span>
+            <span class="tech-tag">CWA OpenData</span>
+            <span class="tech-tag">SQLite3</span>
+          </div>
+
+          <div class="project-footer">
+            <a href="https://github.com/hankyyyyyy/HW10-Taiwan-Weather" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+              <svg viewBox="0 0 24 24" fill="currentColor" class="btn-icon">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+              </svg>
+              <span>GitHub 專案庫</span>
+            </a>
+            <a href="https://hankyyyyyy.github.io/HW10-Taiwan-Weather/" target="_blank" class="btn btn-primary btn-sm" style="background:linear-gradient(135deg, #0284c7, #2563eb);color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;box-shadow:0 0 12px rgba(56,189,248,0.4);">
+              <span>🌤️ 前往線上體驗網址</span>
             </a>
           </div>
         </article>

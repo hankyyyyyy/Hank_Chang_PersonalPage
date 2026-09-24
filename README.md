@@ -28,12 +28,17 @@
   - **IoT 物聯網整合** (75% - ESP32、MQTT 感測器通訊)
 - 具備專屬圖標與動態發光進度條。
 
+[![Live Portfolio](https://img.shields.io/badge/作品集線上網址-點此前往-blue?style=for-the-badge&logo=google-chrome&logoColor=white)](https://hankyyyyyy.github.io/Hank_Chang_PersonalPage/)
+[![Live Weather App](https://img.shields.io/badge/臺灣氣象系統-點此體驗-0284c7?style=for-the-badge&logo=safari&logoColor=white)](https://hankyyyyyy.github.io/HW10-Taiwan-Weather/)
+
 ### 3. 🚀 Projects (精選作品與預計專案)
-- 收錄 3 個重點專案（滿足至少 1 個專案之需求）：
+- 收錄 4 個重點專案：
   1. **AI 智慧手勢與視訊辨識助手**（Python / OpenCV / MediaPipe / PyTorch）
   2. **雲端即時協作筆記 Web 系統**（HTML5 / CSS3 / JavaScript / WebSocket）
   3. **IoT 智慧校園微環境監測站**（本學期預計完成專案，C/C++ / ESP32 / MQTT）
-  4. **臺灣即時氣象與 36 小時預報系統 (Taiwan Weather Hub)**（HTML5 / CSS3 / JavaScript / CWA API / 臺灣 22 縣市向量地圖），點擊 [weather/index.html](file:///c:/Users/user/.gemini/antigravity-ide/scratch/personal-portfolio/weather/index.html) 即可直接體驗。
+  4. **臺灣即時氣象與 36 小時預報系統 (Taiwan Weather Hub)**（HTML5 / CSS3 / JavaScript / CWA API / 臺灣 22 縣市高精向量 GIS 地圖 / 官方 8 大圖資專區）
+     - 🔗 **線上即時預覽**：[https://hankyyyyyy.github.io/HW10-Taiwan-Weather/](https://hankyyyyyy.github.io/HW10-Taiwan-Weather/)
+     - 💻 **GitHub 儲存庫**：[https://github.com/hankyyyyyy/HW10-Taiwan-Weather](https://github.com/hankyyyyyy/HW10-Taiwan-Weather)
 - 每個卡片均具備清晰的專案說明、技術棧標籤與 GitHub 原始碼連結。
 
 ### 4. ⏱️ Live Clock (JavaScript 即時時鐘)
