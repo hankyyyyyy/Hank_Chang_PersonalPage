@@ -945,8 +945,9 @@
         <div class="problem-select-box" title="加分項 1: 下拉視窗呈現兩種 Problem">
           <label for="problemSelect"><i class="fa-solid fa-cube"></i> PROBLEM:</label>
           <select id="problemSelect">
-            <option value="50_startups" selected>Problem 1: 50 Startups (Profit)</option>
-            <option value="boston_housing">Problem 2: Boston Housing (MEDV)</option>
+            <option value="50_startups" selected>Problem 1: 50 Startups (Profit Prediction - Multiple LR)</option>
+            <option value="boston_housing">Problem 2A: Boston Housing (MEDV Home Value)</option>
+            <option value="tsmc_stock">Problem 2B: TSMC 2330.TW (Stock Auto-Regression)</option>
           </select>
         </div>
 
@@ -955,9 +956,9 @@
           <i class="fa-solid fa-cloud-arrow-down"></i> 自訂 Dataset (加分項)
         </button>
 
-        <a href="https://statsunlock.com/multiple-linear-regression-calculator/" target="_blank" class="ref-btn">
+        <a id="refSourceLink" href="https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv" target="_blank" class="ref-btn">
           <i class="fa-solid fa-arrow-up-right-from-square"></i>
-          Style Ref: StatsUnlock
+          50 Startups Dataset
         </a>
       </div>
     </div>
@@ -970,7 +971,7 @@
       <div class="panel-header">
         <div class="panel-title">
           <i class="fa-solid fa-database" style="color: var(--primary);"></i>
-          <span>加分項 2: 可任意輸入 Dataset (支援 CSV URL 或本機上傳)</span>
+          <span>加分項 2: 可任意輸入 Dataset (支援 CSV 網址、檔案上傳或直接貼上)</span>
           <span class="badge-tag badge-green">In-Browser ML Engine</span>
         </div>
         <div id="datasetLoadStatus" style="font-size: 12.5px; color: var(--slate-500);">
@@ -989,6 +990,16 @@
           <i class="fa-solid fa-upload"></i> 上傳本機 CSV
         </button>
         <input type="file" id="localCsvFile" accept=".csv" style="display: none;">
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <details style="font-size: 13px; color: var(--slate-600); cursor: pointer;">
+          <summary style="font-weight: 600; color: var(--primary);"><i class="fa-solid fa-paste"></i> 或直接貼上 CSV 文本內容 (免跨域限制)</summary>
+          <textarea id="customCsvText" style="width: 100%; height: 90px; margin-top: 8px; padding: 10px; border: 1px solid var(--slate-300); border-radius: var(--radius-sm); font-family: 'Fira Code', monospace; font-size: 12px; box-sizing: border-box;" placeholder="在此貼上 CSV 內容 (含標題行)..."></textarea>
+          <button id="btnParseText" class="btn-train" style="margin-top: 6px; padding: 6px 14px; font-size: 12.5px;">
+            <i class="fa-solid fa-play"></i> 解析文本並訓練模型
+          </button>
+        </details>
       </div>
 
       <div class="preset-chips-row">
@@ -1258,14 +1269,75 @@
       </div>
     </div>
 
-  </div>
+    <!-- CRISP-DM 6-Phase Architecture Guide (Lecture 6 Topic Alignment) -->
+    <div class="crisp-guide-card" style="margin-top: 28px;">
+      <div class="card-header" style="margin-bottom: 14px;">
+        <div class="card-title-group">
+          <h3><i class="fa-solid fa-diagram-project" style="color: var(--primary);"></i> CRISP-DM Methodology Workflow (跨領域資料分析標準作業流程)</h3>
+          <div class="card-subtitle">本專案完整落實 AIoT-DA Lecture 6 六大階段標準分析與實作。</div>
+        </div>
+        <span class="badge-tag badge-green"><i class="fa-solid fa-check-double"></i> 100% CRISP-DM Aligned</span>
+      </div>
+
+      <div class="crisp-steps-grid">
+        <div class="crisp-step-item">
+          <div class="crisp-step-num">Step 1 • Business Understanding</div>
+          <div class="crisp-step-title">商業理解與目標</div>
+          <div class="crisp-step-desc">
+            預測創業公司淨利 (Profit) 或房價/股價，定義成功標準為最大化 R² (>0.94) 並最小化測試集 RMSE ($8,198)。
+          </div>
+        </div>
+
+        <div class="crisp-step-item">
+          <div class="crisp-step-num">Step 2 • Data Understanding</div>
+          <div class="crisp-step-title">資料理解與探索</div>
+          <div class="crisp-step-desc">
+            檢視 R&D Spend、Admin、Marketing 與 State 分布，確認無缺失值並繪製實際 vs 預測殘差散佈圖。
+          </div>
+        </div>
+
+        <div class="crisp-step-item">
+          <div class="crisp-step-num">Step 3 • Data Preparation</div>
+          <div class="crisp-step-title">資料前處理與編碼</div>
+          <div class="crisp-step-desc">
+            針對名義類別 (State) 進行 OneHotEncoding，移除基準組 (California) 避免虛擬變數陷阱 (Dummy Variable Trap)，並按 8:2 切分訓練與測試集。
+          </div>
+        </div>
+
+        <div class="crisp-step-item">
+          <div class="crisp-step-num">Step 4 • Modeling</div>
+          <div class="crisp-step-title">多元線性迴歸建模</div>
+          <div class="crisp-step-desc">
+            應用 Scikit-Learn LinearRegression 與 5 大特徵選取演算法 (Lasso L1, Forward SFS, RFE, ElasticNet, Exhaustive) 進行特徵子集優化。
+          </div>
+        </div>
+
+        <div class="crisp-step-item">
+          <div class="crisp-step-num">Step 5 • Evaluation</div>
+          <div class="crisp-step-title">模型評估與檢驗</div>
+          <div class="crisp-step-desc">
+            計算 MSE、MAE、R²、RMSE，驗證 Occam's Razor：2 個特徵達到最佳甜蜜點 (Sweet Spot)，5 個特徵則發生過擬合峭壁 (Overfitting Cliff)。
+          </div>
+        </div>
+
+        <div class="crisp-step-item">
+          <div class="crisp-step-num">Step 6 • Deployment</div>
+          <div class="crisp-step-title">模型部署與導出</div>
+          <div class="crisp-step-desc">
+            支援前端即時 JavaScript 矩陣推論運算、Pickle/Gzip 模型序列化持久化，以及 GitHub Pages 自動化工作流部屬。
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
 
   <!-- Footer & References -->
   <footer>
     <div class="footer-inner">
       <div style="max-width: 650px;">
         <h4 style="font-size: 16px; margin-bottom: 8px; color: var(--slate-900);">
-          <i class="fa-solid fa-building-columns"></i> 50 Startups & Boston Housing CRISP-DM Machine Learning Project
+          <i class="fa-solid fa-building-columns"></i> 50 Startups, Boston Housing & TSMC CRISP-DM Machine Learning Project
         </h4>
         <p style="line-height: 1.6; font-size: 13px;">
           Developed for multiple linear regression model selection, parsimony validation, and statistical inference. Built with pure Vanilla HTML, CSS, JavaScript, and Chart.js.
@@ -1288,82 +1360,11 @@
     </div>
   </footer>
 
-  <!-- Scripts -->
+  <!-- Core Scripts -->
   <script src="datasets_config.js"></script>
   <script src="model_data.js"></script>
   <script src="ml-engine.js"></script>
   <script src="app.js"></script>
-
-  <!-- Setup Toggle and Event Enhancements -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const toggleBtn = document.getElementById('toggleDatasetBtn');
-      const panel = document.getElementById('customDatasetPanel');
-      if (toggleBtn && panel) {
-        toggleBtn.addEventListener('click', () => {
-          panel.classList.toggle('open');
-          if (panel.classList.contains('open')) {
-            toggleBtn.innerHTML = '<i class="fa-solid fa-chevron-up"></i> 收合自訂 Dataset';
-          } else {
-            toggleBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> 自訂 Dataset (加分項)';
-          }
-        });
-      }
-
-      const btnBrowse = document.getElementById('btnBrowseCsv');
-      const fileInput = document.getElementById('localCsvFile');
-      if (btnBrowse && fileInput) {
-        btnBrowse.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
-          const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-              try {
-                const { config, models } = window.MLEngine.buildDatasetFromCSV(evt.target.result);
-                config.referenceName = file.name;
-                window.DATASETS_CONFIG['custom_dataset'] = config;
-                window.MODEL_DATA_CUSTOM = models;
-
-                const sel = document.getElementById('problemSelect');
-                let opt = sel.querySelector('option[value="custom_dataset"]');
-                if (!opt) {
-                  opt = document.createElement('option');
-                  opt.value = 'custom_dataset';
-                  sel.appendChild(opt);
-                }
-                opt.textContent = 'Custom: ' + file.name;
-                sel.value = 'custom_dataset';
-                window.AppML.applyProblemChange('custom_dataset');
-                document.getElementById('datasetLoadStatus').innerHTML = '<span style="color: #059669; font-weight: 600;">✓ 本機檔案 ' + file.name + ' 分析完成！</span>';
-              } catch (err) {
-                alert('解析失敗: ' + err.message);
-              }
-            };
-            reader.readAsText(file);
-          }
-        });
-      }
-
-      const btnRunUrl = document.getElementById('btnRunUrlTrain');
-      if (btnRunUrl) {
-        btnRunUrl.addEventListener('click', () => {
-          const url = document.getElementById('datasetUrlInput').value.trim();
-          if (url) {
-            window.AppML.loadDatasetFromUrl(url);
-          }
-        });
-      }
-
-      document.querySelectorAll('.chip-btn').forEach(chip => {
-        chip.addEventListener('click', () => {
-          const url = chip.dataset.url;
-          document.getElementById('datasetUrlInput').value = url;
-          window.AppML.loadDatasetFromUrl(url);
-        });
-      });
-    });
-  </script>
 
 </body>
 </html>

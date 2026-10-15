@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Pure JavaScript In-Browser Machine Learning & Linear Regression Engine
  * Supports:
  * - Robust CSV Parsing & Type Inference

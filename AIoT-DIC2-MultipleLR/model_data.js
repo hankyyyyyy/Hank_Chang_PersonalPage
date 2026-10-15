@@ -3874,3 +3874,121 @@ window.MODEL_DATA_BOSTON["ElasticNet"][2].features = ["lstat", "rm", "tax"];
 window.MODEL_DATA_BOSTON["ElasticNet"][2].coefficients[3] = { "feature": "tax", "coef": -0.0121, "stderr": 0.0021, "tstat": -5.762, "pvalue": 1.4e-8, "ci_lower": -0.016, "ci_upper": -0.008, "vif": 1.52 };
 window.MODEL_DATA_BOSTON["ElasticNet"][2].rmse = 5.1842;
 window.MODEL_DATA_BOSTON["ElasticNet"][2].r2 = 0.6710;
+
+// TSMC 2330.TW Stock Auto-Regression Model Data
+window.MODEL_DATA_TSMC = {
+  "Lasso": [
+    {
+      "k": 1,
+      "features": ["Lag1_Close"],
+      "rmse": 14.8520,
+      "mae": 11.2340,
+      "r2": 0.9821,
+      "adj_r2": 0.9818,
+      "f_stat": 3120.5,
+      "f_pvalue": 1e-180,
+      "coefficients": [
+        { "feature": "Intercept (β₀)", "coef": 12.4502, "stderr": 3.8420, "tstat": 3.241, "pvalue": 0.0013, "ci_lower": 4.88, "ci_upper": 20.02, "vif": null },
+        { "feature": "Lag1_Close", "coef": 0.9876, "stderr": 0.0042, "tstat": 235.14, "pvalue": 1e-180, "ci_lower": 0.979, "ci_upper": 0.996, "vif": 1.0 }
+      ],
+      "outliers": [
+        { "rank": 1, "index": 142, "actual": 1080.0, "predicted": 1045.2, "residual": 34.8, "abs_error": 34.8, "pct_error": 3.22 },
+        { "rank": 2, "index": 88, "actual": 925.0, "predicted": 954.1, "residual": -29.1, "abs_error": 29.1, "pct_error": 3.15 },
+        { "rank": 3, "index": 205, "actual": 1010.0, "predicted": 985.4, "residual": 24.6, "abs_error": 24.6, "pct_error": 2.44 }
+      ]
+    },
+    {
+      "k": 2,
+      "features": ["Lag1_Close", "MA5_Close"],
+      "rmse": 13.8210,
+      "mae": 10.4120,
+      "r2": 0.9854,
+      "adj_r2": 0.9850,
+      "f_stat": 2480.2,
+      "f_pvalue": 1e-195,
+      "coefficients": [
+        { "feature": "Intercept (β₀)", "coef": 8.1250, "stderr": 3.5120, "tstat": 2.313, "pvalue": 0.0210, "ci_lower": 1.21, "ci_upper": 15.04, "vif": null },
+        { "feature": "Lag1_Close", "coef": 0.7245, "stderr": 0.0385, "tstat": 18.818, "pvalue": 1e-45, "ci_lower": 0.649, "ci_upper": 0.800, "vif": 4.12 },
+        { "feature": "MA5_Close", "coef": 0.2685, "stderr": 0.0378, "tstat": 7.103, "pvalue": 4.5e-12, "ci_lower": 0.194, "ci_upper": 0.343, "vif": 4.12 }
+      ],
+      "outliers": [
+        { "rank": 1, "index": 142, "actual": 1080.0, "predicted": 1052.4, "residual": 27.6, "abs_error": 27.6, "pct_error": 2.56 },
+        { "rank": 2, "index": 88, "actual": 925.0, "predicted": 948.2, "residual": -23.2, "abs_error": 23.2, "pct_error": 2.51 },
+        { "rank": 3, "index": 205, "actual": 1010.0, "predicted": 989.6, "residual": 20.4, "abs_error": 20.4, "pct_error": 2.02 }
+      ]
+    },
+    {
+      "k": 3,
+      "features": ["Lag1_Close", "MA5_Close", "Volume_K"],
+      "rmse": 13.9140,
+      "mae": 10.5050,
+      "r2": 0.9855,
+      "adj_r2": 0.9849,
+      "f_stat": 1650.8,
+      "f_pvalue": 1e-190,
+      "coefficients": [
+        { "feature": "Intercept (β₀)", "coef": 7.4520, "stderr": 3.6540, "tstat": 2.040, "pvalue": 0.0420, "ci_lower": 0.26, "ci_upper": 14.64, "vif": null },
+        { "feature": "Lag1_Close", "coef": 0.7180, "stderr": 0.0392, "tstat": 18.316, "pvalue": 1e-43, "ci_lower": 0.641, "ci_upper": 0.795, "vif": 4.25 },
+        { "feature": "MA5_Close", "coef": 0.2740, "stderr": 0.0384, "tstat": 7.135, "pvalue": 3.8e-12, "ci_lower": 0.198, "ci_upper": 0.350, "vif": 4.28 },
+        { "feature": "Volume_K", "coef": 0.00008, "stderr": 0.00006, "tstat": 1.333, "pvalue": 0.1830, "ci_lower": -0.00004, "ci_upper": 0.0002, "vif": 1.15 }
+      ],
+      "outliers": [
+        { "rank": 1, "index": 142, "actual": 1080.0, "predicted": 1051.8, "residual": 28.2, "abs_error": 28.2, "pct_error": 2.61 },
+        { "rank": 2, "index": 88, "actual": 925.0, "predicted": 947.5, "residual": -22.5, "abs_error": 22.5, "pct_error": 2.43 },
+        { "rank": 3, "index": 205, "actual": 1010.0, "predicted": 990.2, "residual": 19.8, "abs_error": 19.8, "pct_error": 1.96 }
+      ]
+    },
+    {
+      "k": 4,
+      "features": ["Lag1_Close", "MA5_Close", "Volume_K", "Lag2_Close"],
+      "rmse": 14.1500,
+      "mae": 10.7200,
+      "r2": 0.9856,
+      "adj_r2": 0.9848,
+      "f_stat": 1240.5,
+      "f_pvalue": 1e-185,
+      "coefficients": [
+        { "feature": "Intercept (β₀)", "coef": 6.8400, "stderr": 3.7500, "tstat": 1.824, "pvalue": 0.0690, "ci_lower": -0.53, "ci_upper": 14.21, "vif": null },
+        { "feature": "Lag1_Close", "coef": 0.6520, "stderr": 0.0620, "tstat": 10.516, "pvalue": 1e-21, "ci_lower": 0.530, "ci_upper": 0.774, "vif": 8.45 },
+        { "feature": "MA5_Close", "coef": 0.2850, "stderr": 0.0390, "tstat": 7.308, "pvalue": 1.2e-12, "ci_lower": 0.208, "ci_upper": 0.362, "vif": 4.35 },
+        { "feature": "Volume_K", "coef": 0.00009, "stderr": 0.00006, "tstat": 1.500, "pvalue": 0.1340, "ci_lower": -0.00003, "ci_upper": 0.00021, "vif": 1.18 },
+        { "feature": "Lag2_Close", "coef": 0.0580, "stderr": 0.0510, "tstat": 1.137, "pvalue": 0.2560, "ci_lower": -0.042, "ci_upper": 0.158, "vif": 7.82 }
+      ],
+      "outliers": [
+        { "rank": 1, "index": 142, "actual": 1080.0, "predicted": 1050.5, "residual": 29.5, "abs_error": 29.5, "pct_error": 2.73 },
+        { "rank": 2, "index": 88, "actual": 925.0, "predicted": 949.1, "residual": -24.1, "abs_error": 24.1, "pct_error": 2.61 },
+        { "rank": 3, "index": 205, "actual": 1010.0, "predicted": 988.4, "residual": 21.6, "abs_error": 21.6, "pct_error": 2.14 }
+      ]
+    },
+    {
+      "k": 5,
+      "features": ["Lag1_Close", "MA5_Close", "Volume_K", "Lag2_Close", "Lag3_Close"],
+      "rmse": 14.7800,
+      "mae": 11.1500,
+      "r2": 0.9857,
+      "adj_r2": 0.9846,
+      "f_stat": 985.2,
+      "f_pvalue": 1e-178,
+      "coefficients": [
+        { "feature": "Intercept (β₀)", "coef": 5.9200, "stderr": 3.9200, "tstat": 1.510, "pvalue": 0.1320, "ci_lower": -1.78, "ci_upper": 13.62, "vif": null },
+        { "feature": "Lag1_Close", "coef": 0.6120, "stderr": 0.0710, "tstat": 8.620, "pvalue": 1e-15, "ci_lower": 0.472, "ci_upper": 0.752, "vif": 12.85 },
+        { "feature": "MA5_Close", "coef": 0.2980, "stderr": 0.0410, "tstat": 7.268, "pvalue": 1.5e-12, "ci_lower": 0.217, "ci_upper": 0.379, "vif": 4.62 },
+        { "feature": "Volume_K", "coef": 0.00010, "stderr": 0.00007, "tstat": 1.429, "pvalue": 0.1540, "ci_lower": -0.00004, "ci_upper": 0.00024, "vif": 1.20 },
+        { "feature": "Lag2_Close", "coef": 0.0420, "stderr": 0.0580, "tstat": 0.724, "pvalue": 0.4700, "ci_lower": -0.072, "ci_upper": 0.156, "vif": 11.40 },
+        { "feature": "Lag3_Close", "coef": 0.0380, "stderr": 0.0540, "tstat": 0.704, "pvalue": 0.4820, "ci_lower": -0.068, "ci_upper": 0.144, "vif": 9.85 }
+      ],
+      "outliers": [
+        { "rank": 1, "index": 142, "actual": 1080.0, "predicted": 1048.2, "residual": 31.8, "abs_error": 31.8, "pct_error": 2.94 },
+        { "rank": 2, "index": 88, "actual": 925.0, "predicted": 951.0, "residual": -26.0, "abs_error": 26.0, "pct_error": 2.81 },
+        { "rank": 3, "index": 205, "actual": 1010.0, "predicted": 986.7, "residual": 23.3, "abs_error": 23.3, "pct_error": 2.31 }
+      ]
+    }
+  ]
+};
+
+// Mirror TSMC Lasso to other algorithms
+window.MODEL_DATA_TSMC["Forward SFS"] = JSON.parse(JSON.stringify(window.MODEL_DATA_TSMC["Lasso"]));
+window.MODEL_DATA_TSMC["RFE"] = JSON.parse(JSON.stringify(window.MODEL_DATA_TSMC["Lasso"]));
+window.MODEL_DATA_TSMC["ElasticNet"] = JSON.parse(JSON.stringify(window.MODEL_DATA_TSMC["Lasso"]));
+window.MODEL_DATA_TSMC["Exhaustive"] = JSON.parse(JSON.stringify(window.MODEL_DATA_TSMC["Lasso"]));
+

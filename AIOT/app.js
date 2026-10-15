@@ -1,6 +1,11 @@
 /**
- * Main Application Logic for Multiple Linear Regression Explorer
- * Supports Problem Switching (Bonus 1) and Custom Dataset Training (Bonus 2)
+ * AIoT Multiple Linear Regression & Feature Selection Explorer
+ * Core Application Controller
+ * Supports:
+ * - 3 Preconfigured Benchmark Problems (50 Startups, Boston Housing, TSMC 2330.TW)
+ * - In-Browser Client-Side Machine Learning Engine for Custom Datasets (URL, Upload, or Paste)
+ * - 5 ML Feature Selection Methods (Lasso, Forward SFS, RFE, ElasticNet, Exhaustive)
+ * - Dynamic Predictor Sliders & Interactive Diagnostics
  */
 
 (function () {
@@ -27,7 +32,7 @@
   });
 
   function getProblemConfig() {
-    return window.DATASETS_CONFIG[currentProblem];
+    return window.DATASETS_CONFIG ? window.DATASETS_CONFIG[currentProblem] : null;
   }
 
   function getProblemModels() {
@@ -35,6 +40,8 @@
       return window.MODEL_DATA_50_STARTUPS || window.MODEL_DATA;
     } else if (currentProblem === 'boston_housing') {
       return window.MODEL_DATA_BOSTON;
+    } else if (currentProblem === 'tsmc_stock') {
+      return window.MODEL_DATA_TSMC;
     } else if (window.MODEL_DATA_CUSTOM) {
       return window.MODEL_DATA_CUSTOM;
     }
@@ -49,9 +56,18 @@
     const algoList = models[algoKey] || models['Lasso'] || models[Object.keys(models)[0]];
     if (!algoList || algoList.length === 0) return null;
 
-    // Constrain k to valid range
     const safeK = Math.min(algoList.length, Math.max(1, currentK));
     return algoList[safeK - 1];
+  }
+
+  function safeSetText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function safeSetHtml(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
   }
 
   function setupEventListeners() {
@@ -63,7 +79,21 @@
       });
     }
 
-    // Algorithm tabs
+    // Toggle custom dataset panel
+    const toggleBtn = document.getElementById('toggleDatasetBtn');
+    const customPanel = document.getElementById('customDatasetPanel');
+    if (toggleBtn && customPanel) {
+      toggleBtn.addEventListener('click', () => {
+        customPanel.classList.toggle('open');
+        if (customPanel.classList.contains('open')) {
+          toggleBtn.innerHTML = '<i class="fa-solid fa-chevron-up"></i> 收合自訂 Dataset';
+        } else {
+          toggleBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> 自訂 Dataset (加分項)';
+        }
+      });
+    }
+
+    // Algorithm selection tabs
     const tabs = document.querySelectorAll('#algoTabs .tab-btn');
     tabs.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -75,31 +105,33 @@
     });
 
     // Preset CSV chips (Bonus 2)
-    document.querySelectorAll('.preset-chip').forEach(chip => {
+    document.querySelectorAll('.preset-chip, .chip-btn').forEach(chip => {
       chip.addEventListener('click', () => {
         const url = chip.dataset.url;
         const target = chip.dataset.target || '';
-        document.getElementById('customCsvUrl').value = url;
+        const urlInput = document.getElementById('customCsvUrl') || document.getElementById('datasetUrlInput');
+        if (urlInput) urlInput.value = url;
         loadDatasetFromUrl(url, target);
       });
     });
 
     // Load CSV from URL button (Bonus 2)
-    const btnLoadUrl = document.getElementById('btnLoadUrl');
+    const btnLoadUrl = document.getElementById('btnLoadUrl') || document.getElementById('btnRunUrlTrain');
     if (btnLoadUrl) {
       btnLoadUrl.addEventListener('click', () => {
-        const url = document.getElementById('customCsvUrl').value.trim();
+        const urlInput = document.getElementById('customCsvUrl') || document.getElementById('datasetUrlInput');
+        const url = urlInput ? urlInput.value.trim() : '';
         if (url) {
           loadDatasetFromUrl(url);
         } else {
-          alert('Please enter a valid raw CSV URL.');
+          alert('請輸入有效的 CSV 網址！');
         }
       });
     }
 
     // Local CSV File Upload (Bonus 2)
-    const fileInput = document.getElementById('csvFileInput');
-    const btnUpload = document.getElementById('btnUploadCsv');
+    const fileInput = document.getElementById('csvFileInput') || document.getElementById('localCsvFile');
+    const btnUpload = document.getElementById('btnUploadCsv') || document.getElementById('btnBrowseCsv');
     if (btnUpload && fileInput) {
       btnUpload.addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', (e) => {
@@ -110,10 +142,28 @@
             try {
               processAndApplyCustomCSV(event.target.result, file.name);
             } catch (err) {
-              alert('Error analyzing CSV: ' + err.message);
+              alert('CSV 解析失敗: ' + err.message);
             }
           };
           reader.readAsText(file);
+        }
+      });
+    }
+
+    // Paste CSV Textarea Button (Bonus 2)
+    const btnParseText = document.getElementById('btnParseText');
+    const customCsvText = document.getElementById('customCsvText');
+    if (btnParseText && customCsvText) {
+      btnParseText.addEventListener('click', () => {
+        const text = customCsvText.value.trim();
+        if (text) {
+          try {
+            processAndApplyCustomCSV(text, 'Pasted_Data.csv');
+          } catch (err) {
+            alert('CSV 解析失敗: ' + err.message);
+          }
+        } else {
+          alert('請在文字框內貼上 CSV 內容！');
         }
       });
     }
@@ -126,19 +176,37 @@
 
     currentK = config.sweetSpotK || 2;
 
-    // Update Hero elements
-    document.getElementById('heroTitle').textContent = config.heroTitle;
-    document.getElementById('heroDesc').textContent = config.heroDesc;
-    document.getElementById('heroDatasetPill').innerHTML = `<i class="fa-solid fa-database"></i> ${config.name}`;
-    document.getElementById('heroSweetPill').innerHTML = `<i class="fa-solid fa-star" style="color: #34d399;"></i> ${config.sweetSpotTitle}`;
-    document.getElementById('heroOverfitPill').innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #fbbf24;"></i> ${config.overfitBadge}`;
+    // Header & Breadcrumb
+    safeSetText('headerTitle', `${config.name} Explorer`);
+    safeSetText('breadcrumbCurrent', `${config.name}`);
 
-    // Update Reference Link
+    // Hero elements
+    safeSetText('heroTitle', config.heroTitle || `${config.name} Parsimony Analysis`);
+    safeSetText('heroDesc', config.heroDesc || '');
+
+    const datasetBadge = `<i class="fa-solid fa-database"></i> ${config.name}`;
+    safeSetHtml('heroDatasetPill', datasetBadge);
+    safeSetHtml('heroPillDataset', datasetBadge);
+
+    const sweetBadge = `<i class="fa-solid fa-star" style="color: #34d399;"></i> ${config.sweetSpotTitle}`;
+    safeSetHtml('heroSweetPill', sweetBadge);
+    safeSetHtml('heroPillSweet', sweetBadge);
+
+    const overfitBadge = `<i class="fa-solid fa-triangle-exclamation" style="color: #fbbf24;"></i> ${config.overfitBadge}`;
+    safeSetHtml('heroOverfitPill', overfitBadge);
+    safeSetHtml('heroPillOverfit', overfitBadge);
+
+    // Reference Link
     const refSourceLink = document.getElementById('refSourceLink');
     if (refSourceLink) {
-      refSourceLink.href = config.referenceUrl;
-      refSourceLink.textContent = config.referenceName;
+      refSourceLink.href = config.referenceUrl || '#';
+      refSourceLink.textContent = config.referenceName || 'Dataset Reference';
     }
+
+    // Calculator Section Titles
+    safeSetHtml('calcHeaderTitle', `<i class="fa-solid fa-calculator" style="color: var(--accent-emerald);"></i> Live ${config.target} Predictor`);
+    safeSetText('predOutputLabel', `Predicted ${config.target}`);
+    safeSetText('outliersSubtitle', `Top absolute residuals on the out-of-sample test set for ${config.name}`);
 
     renderKButtons();
     renderPredictorInputs();
@@ -149,10 +217,11 @@
     const config = getProblemConfig();
     const models = getProblemModels();
     const algoKey = currentAlgo === 'ALL' ? 'Lasso' : currentAlgo;
-    const list = models ? (models[algoKey] || models['Lasso']) : [];
+    const list = models ? (models[algoKey] || models['Lasso'] || models[Object.keys(models)[0]]) : [];
     const maxK = list ? list.length : 5;
 
     const group = document.getElementById('kSelectorGroup');
+    if (!group) return;
     group.innerHTML = '';
 
     for (let k = 1; k <= maxK; k++) {
@@ -162,13 +231,13 @@
 
       if (k === currentK) btn.classList.add('active');
 
-      if (k === config.sweetSpotK) {
+      if (config && k === config.sweetSpotK) {
         btn.classList.add('sweet-spot');
-      } else if (k === maxK && maxK >= 4) {
+      } else if (config && k === maxK && maxK >= 4) {
         btn.classList.add('overfitting');
       }
 
-      const labelText = config.kLabels && config.kLabels[k] ? config.kLabels[k] : `k = ${k}`;
+      const labelText = config && config.kLabels && config.kLabels[k] ? config.kLabels[k] : `k = ${k}`;
       btn.innerHTML = labelText;
 
       btn.addEventListener('click', () => {
@@ -185,9 +254,10 @@
   function renderPredictorInputs() {
     const config = getProblemConfig();
     const container = document.getElementById('dynamicInputsContainer');
+    if (!container) return;
     container.innerHTML = '';
 
-    if (!config.features || config.features.length === 0) return;
+    if (!config || !config.features || config.features.length === 0) return;
 
     config.features.forEach(feat => {
       const group = document.createElement('div');
@@ -204,7 +274,8 @@
           </select>
         `;
         container.appendChild(group);
-        document.getElementById(`input_${feat.id}`).addEventListener('change', calculateLivePrediction);
+        const selEl = document.getElementById(`input_${feat.id}`);
+        if (selEl) selEl.addEventListener('change', calculateLivePrediction);
       } else {
         const prefix = feat.prefix || '';
         const suffix = feat.suffix || '';
@@ -224,17 +295,19 @@
         const num = document.getElementById(`num_${feat.id}`);
         const label = document.getElementById(`label_${feat.id}`);
 
-        slider.addEventListener('input', (e) => {
-          num.value = e.target.value;
-          label.textContent = prefix + Number(e.target.value).toLocaleString() + suffix;
-          calculateLivePrediction();
-        });
+        if (slider && num && label) {
+          slider.addEventListener('input', (e) => {
+            num.value = e.target.value;
+            label.textContent = prefix + Number(e.target.value).toLocaleString() + suffix;
+            calculateLivePrediction();
+          });
 
-        num.addEventListener('input', (e) => {
-          slider.value = e.target.value;
-          label.textContent = prefix + Number(e.target.value).toLocaleString() + suffix;
-          calculateLivePrediction();
-        });
+          num.addEventListener('input', (e) => {
+            slider.value = e.target.value;
+            label.textContent = prefix + Number(e.target.value).toLocaleString() + suffix;
+            calculateLivePrediction();
+          });
+        }
       }
     });
   }
@@ -244,64 +317,71 @@
     const config = getProblemConfig();
     if (!data || !config) return;
 
-    // Format target currency / unit
+    // Currency and unit multipliers
     const prefix = config.targetPrefix || '';
     const unit = config.targetUnit ? ` ${config.targetUnit}` : '';
     const mult = config.targetMultiplier || 1;
 
-    // Update KPI Cards
+    // KPI Cards
     const dispRMSE = (data.rmse * mult).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    document.getElementById('valRMSE').textContent = `${prefix}${dispRMSE}${unit}`;
-    document.getElementById('valR2').textContent = data.r2.toFixed(4);
-    document.getElementById('valAdjR2').textContent = data.adj_r2 ? data.adj_r2.toFixed(4) : data.r2.toFixed(4);
-    const dispMAE = (data.mae * mult).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    document.getElementById('valMAE').textContent = `${prefix}${dispMAE}${unit}`;
-    document.getElementById('valFStat').textContent = data.f_stat ? data.f_stat.toFixed(1) : '150.0';
+    safeSetText('valRMSE', `${prefix}${dispRMSE}${unit}`);
 
-    // Sweet spot / Warning Badges
+    safeSetText('valR2', data.r2.toFixed(4));
+    safeSetText('valAdjR2', data.adj_r2 ? data.adj_r2.toFixed(4) : data.r2.toFixed(4));
+
+    const dispMAE = (data.mae * mult).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    safeSetText('valMAE', `${prefix}${dispMAE}${unit}`);
+
+    safeSetText('valFStat', data.f_stat ? data.f_stat.toFixed(1) : '150.0');
+
+    // Sweet Spot & Warning Badges
     const rmseBadge = document.getElementById('rmseBadge');
-    if (currentK === config.sweetSpotK) {
-      rmseBadge.className = 'badge-tag badge-green';
-      rmseBadge.innerHTML = '<i class="fa-solid fa-award"></i> Optimal Sweet Spot';
-    } else if (currentK >= config.overfitK) {
-      rmseBadge.className = 'badge-tag badge-amber';
-      rmseBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Overfitting / Diminishing';
-    } else {
-      rmseBadge.className = 'badge-tag badge-blue';
-      rmseBadge.innerHTML = `k = ${currentK}`;
+    if (rmseBadge) {
+      if (currentK === config.sweetSpotK) {
+        rmseBadge.className = 'badge-tag badge-green';
+        rmseBadge.innerHTML = '<i class="fa-solid fa-award"></i> Optimal Sweet Spot';
+      } else if (currentK >= config.overfitK) {
+        rmseBadge.className = 'badge-tag badge-amber';
+        rmseBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Overfitting / Diminishing';
+      } else {
+        rmseBadge.className = 'badge-tag badge-blue';
+        rmseBadge.innerHTML = `k = ${currentK}`;
+      }
     }
 
     // Active Feature Chips
-    document.getElementById('featuresCount').textContent = data.features.length;
+    safeSetText('featuresCount', String(data.features.length));
     const chipsContainer = document.getElementById('featuresListChips');
-    chipsContainer.innerHTML = '';
-    data.features.forEach(feat => {
-      const chip = document.createElement('span');
-      chip.className = 'feature-chip';
-      chip.textContent = feat;
-      chipsContainer.appendChild(chip);
-    });
+    if (chipsContainer) {
+      chipsContainer.innerHTML = '';
+      data.features.forEach(feat => {
+        const chip = document.createElement('span');
+        chip.className = 'feature-chip';
+        chip.textContent = feat;
+        chipsContainer.appendChild(chip);
+      });
+    }
 
     // Parsimony notice
     const notice = document.getElementById('parsimonyNotice');
-    if (currentK === config.sweetSpotK) {
-      notice.className = 'badge-tag badge-green';
-      notice.innerHTML = `<i class="fa-solid fa-star"></i> Occam's Razor: ${config.sweetSpotBadge}`;
-    } else if (currentK >= config.overfitK) {
-      notice.className = 'badge-tag badge-amber';
-      notice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Warning: ${config.overfitBadge}`;
-    } else {
-      notice.className = 'badge-tag badge-blue';
-      notice.innerHTML = `<i class="fa-solid fa-circle-info"></i> Model evaluated with ${currentK} predictors.`;
+    if (notice) {
+      if (currentK === config.sweetSpotK) {
+        notice.className = 'badge-tag badge-green';
+        notice.innerHTML = `<i class="fa-solid fa-star"></i> Occam's Razor: ${config.sweetSpotBadge}`;
+      } else if (currentK >= config.overfitK) {
+        notice.className = 'badge-tag badge-amber';
+        notice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Warning: ${config.overfitBadge}`;
+      } else {
+        notice.className = 'badge-tag badge-blue';
+        notice.innerHTML = `<i class="fa-solid fa-circle-info"></i> Model evaluated with ${currentK} predictors.`;
+      }
     }
 
     // Update Equation
     updateEquation(data.coefficients, config.target);
 
-    // Update Coefficients Table
+    // Update Tables
     updateCoefficientsTable(data.coefficients);
-
-    // Update Outliers Table
     updateOutliersTable(data.outliers, config);
 
     // Update Charts
@@ -313,8 +393,9 @@
 
   function updateEquation(coefficients, targetName) {
     const box = document.getElementById('equationBox');
+    if (!box) return;
     const intercept = coefficients.find(c => c.feature.includes('Intercept'));
-    let parts = [];
+    const parts = [];
 
     if (intercept) {
       parts.push(`<span class="eq-intercept">${intercept.coef.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</span>`);
@@ -332,6 +413,7 @@
 
   function updateCoefficientsTable(coefficients) {
     const tbody = document.getElementById('coefTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     coefficients.forEach(c => {
@@ -366,12 +448,13 @@
 
   function updateOutliersTable(outliers, config) {
     const tbody = document.getElementById('outliersTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     const prefix = config.targetPrefix || '';
     const unit = config.targetUnit ? ` ${config.targetUnit}` : '';
     const mult = config.targetMultiplier || 1;
 
-    outliers.forEach(o => {
+    (outliers || []).forEach(o => {
       const tr = document.createElement('tr');
       const isHigh = o.pct_error > 25 || (o.abs_error * mult) > 10000;
       const statusBadge = isHigh
@@ -406,14 +489,12 @@
       if (c.feature.includes('Intercept')) {
         pred += c.coef;
       } else {
-        // Try finding matching number input or select
-        let inputEl = document.querySelector(`input[data-feature="${c.feature}"]`);
+        const inputEl = document.querySelector(`input[data-feature="${c.feature}"]`);
         if (inputEl) {
           const val = parseFloat(inputEl.value) || 0;
           pred += c.coef * val;
           usedFeatures.push(`${c.feature}: ${(c.coef * val >= 0 ? '+' : '')}${(c.coef * val).toFixed(2)}`);
         } else {
-          // Check for dummy variable like State_Florida or State_New York
           const parts = c.feature.split('_');
           if (parts.length === 2) {
             const baseFeature = parts[0];
@@ -433,17 +514,21 @@
     const mult = config.targetMultiplier || 1;
     const finalVal = (pred * mult).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    document.getElementById('predProfitOutput').textContent = `${prefix}${finalVal}${unit}`;
-    document.getElementById('predFormulaNote').innerHTML = `
+    safeSetText('predProfitOutput', `${prefix}${finalVal}${unit}`);
+    safeSetHtml('predFormulaNote', `
       Active predictors: <strong>${data.features.join(', ')}</strong><br>
       <span style="font-size: 11px; color: #cbd5e1;">(${usedFeatures.join(' | ')})</span>
-    `;
+    `);
   }
 
   // --- Chart.js Setup ---
   function initCharts() {
-    const ctxRMSE = document.getElementById('rmseChart').getContext('2d');
-    const ctxR2 = document.getElementById('r2Chart').getContext('2d');
+    const canvasRMSE = document.getElementById('rmseChart');
+    const canvasR2 = document.getElementById('r2Chart');
+    if (!canvasRMSE || !canvasR2) return;
+
+    const ctxRMSE = canvasRMSE.getContext('2d');
+    const ctxR2 = canvasR2.getContext('2d');
 
     const commonOptions = {
       responsive: true,
@@ -461,7 +546,7 @@
               const k = context.dataIndex + 1;
               const algo = currentAlgo === 'ALL' ? context.dataset.label : currentAlgo;
               const models = getProblemModels();
-              const modelItem = models[algo] ? models[algo][k - 1] : null;
+              const modelItem = models && models[algo] ? models[algo][k - 1] : null;
               return modelItem ? 'Features: ' + modelItem.features.join(', ') : '';
             }
           }
@@ -532,8 +617,10 @@
   }
 
   function updateCharts() {
+    if (!rmseChartInstance || !r2ChartInstance) return;
+
     const isCompareAll = currentAlgo === 'ALL';
-    document.getElementById('rmseChartBadge').textContent = isCompareAll ? 'Comparing 5 Methods' : currentAlgo;
+    safeSetText('rmseChartBadge', isCompareAll ? 'Comparing 5 Methods' : currentAlgo);
 
     const models = getProblemModels();
     const config = getProblemConfig();
@@ -548,7 +635,7 @@
     let maxK = 5;
 
     algosToRender.forEach((algo) => {
-      const algoData = models[algo] || models['Lasso'];
+      const algoData = models[algo] || models['Lasso'] || models[Object.keys(models)[0]];
       if (!algoData) return;
       maxK = Math.max(maxK, algoData.length);
 
@@ -602,36 +689,40 @@
 
   // --- Bonus 2: Custom CSV Loading & Engine Hook ---
   function loadDatasetFromUrl(url, targetCol = null) {
-    const statusMsg = document.getElementById('loaderStatus');
+    const statusMsg = document.getElementById('loaderStatus') || document.getElementById('datasetLoadStatus');
     if (statusMsg) {
-      statusMsg.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fetching dataset from URL...';
+      statusMsg.innerHTML = '<span style="color: var(--primary);"><i class="fa-solid fa-spinner fa-spin"></i> 正在自網址抓取 CSV 資料集...</span>';
     }
 
     fetch(url)
       .then(res => {
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP 錯誤: ${res.status}`);
         return res.text();
       })
       .then(csvText => {
         if (statusMsg) {
-          statusMsg.innerHTML = '<i class="fa-solid fa-gear fa-spin"></i> Training ML regression models in browser...';
+          statusMsg.innerHTML = '<span style="color: var(--primary);"><i class="fa-solid fa-gear fa-spin"></i> 瀏覽器端正在訓練 OLS 迴歸與 5 大特徵選取...</span>';
         }
         setTimeout(() => {
           processAndApplyCustomCSV(csvText, url.split('/').pop(), targetCol);
           if (statusMsg) {
-            statusMsg.innerHTML = '<span style="color: #059669; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Models trained successfully!</span>';
+            statusMsg.innerHTML = '<span style="color: #059669; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> 自訂資料集分析與 5 種模型訓練完成！</span>';
           }
-        }, 50);
+        }, 60);
       })
       .catch(err => {
         console.error(err);
         if (statusMsg) {
-          statusMsg.innerHTML = `<span style="color: #dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Load failed: ${err.message}. Try another URL or local file upload.</span>`;
+          statusMsg.innerHTML = `<span style="color: #dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> 載入失敗 (${err.message})。若因跨域限制，請直接點選下方本機上傳或直接貼上 CSV 內容。</span>`;
         }
       });
   }
 
   function processAndApplyCustomCSV(csvText, filename, customTarget = null) {
+    if (!window.MLEngine || !window.MLEngine.buildDatasetFromCSV) {
+      throw new Error("MLEngine 未能載入，請確認 ml-engine.js 存在！");
+    }
+
     const { config, models } = window.MLEngine.buildDatasetFromCSV(csvText, customTarget);
 
     config.referenceName = `${filename} (${config.badge})`;
@@ -640,23 +731,29 @@
 
     // Add or select option in problem dropdown
     const select = document.getElementById('problemSelect');
-    let customOption = select.querySelector('option[value="custom_dataset"]');
-    if (!customOption) {
-      customOption = document.createElement('option');
-      customOption.value = 'custom_dataset';
+    if (select) {
+      let customOption = select.querySelector('option[value="custom_dataset"]');
+      if (!customOption) {
+        customOption = document.createElement('option');
+        customOption.value = 'custom_dataset';
+        select.appendChild(customOption);
+      }
       customOption.textContent = `📂 Custom: ${filename}`;
-      select.appendChild(customOption);
-    } else {
-      customOption.textContent = `📂 Custom: ${filename}`;
+      select.value = 'custom_dataset';
     }
-    select.value = 'custom_dataset';
 
     applyProblemChange('custom_dataset');
+
+    const statusMsg = document.getElementById('loaderStatus') || document.getElementById('datasetLoadStatus');
+    if (statusMsg) {
+      statusMsg.innerHTML = `<span style="color: #059669; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> 成功載入 ${filename}，已自動切換並展示模型結果！</span>`;
+    }
   }
 
   // Expose for external calls
   window.AppML = {
     applyProblemChange,
-    loadDatasetFromUrl
+    loadDatasetFromUrl,
+    processAndApplyCustomCSV
   };
 })();
