@@ -4,8 +4,7 @@
 * **課程/作業名稱**: DIC-2 kaggle 50 startup and boston housing
 * **指導教授**: 陳煥 教授 (HUAN CHEN)
 * **學生**: Hank Chang (張佑維) - 電機工程學系
-* **展示網址 (GitHub Pages)**: [https://hankyyyyyy.github.io/DIC-2-kaggle-50-startup-and-boston-housing-/](https://hankyyyyyy.github.io/DIC-2-kaggle-50-startup-and-boston-housing-/)
-* **個人作品集整合頁**: [https://hankyyyyyy.github.io/Hank_Chang_PersonalPage/](https://hankyyyyyy.github.io/Hank_Chang_PersonalPage/)
+* **展示網址 (GitHub Pages)**: [https://hankyyyyyy.github.io/Hank_Chang_PersonalPage/AIOT/](https://hankyyyyyy.github.io/Hank_Chang_PersonalPage/AIOT/)
 * **GitHub 倉庫**: [https://github.com/hankyyyyyy/DIC-2-kaggle-50-startup-and-boston-housing-](https://github.com/hankyyyyyy/DIC-2-kaggle-50-startup-and-boston-housing-)
 
 ---
