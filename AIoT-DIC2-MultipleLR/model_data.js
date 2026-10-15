@@ -1,4 +1,4 @@
-﻿window.MODEL_DATA_50_STARTUPS = window.MODEL_DATA = {
+window.MODEL_DATA_50_STARTUPS = window.MODEL_DATA = {
   "Lasso": [
     {
       "k": 1,
@@ -3724,7 +3724,7 @@ window.MODEL_DATA_BOSTON = {
       "f_stat": 601.6,
       "f_pvalue": 1.2e-88,
       "coefficients": [
-        { "feature": "Intercept (帣?)", "coef": 34.5538, "stderr": 0.5626, "tstat": 61.418, "pvalue": 1e-15, "ci_lower": 33.451, "ci_upper": 35.656, "vif": null },
+        { "feature": "Intercept (\u03b2\u2080)", "coef": 34.5538, "stderr": 0.5626, "tstat": 61.418, "pvalue": 1e-15, "ci_lower": 33.451, "ci_upper": 35.656, "vif": null },
         { "feature": "lstat", "coef": -0.9500, "stderr": 0.0387, "tstat": -24.528, "pvalue": 1e-15, "ci_lower": -1.026, "ci_upper": -0.874, "vif": 1.0 }
       ],
       "outliers": [
@@ -3750,7 +3750,7 @@ window.MODEL_DATA_BOSTON = {
       "f_stat": 444.2,
       "f_pvalue": 1.5e-111,
       "coefficients": [
-        { "feature": "Intercept (帣?)", "coef": -1.3583, "stderr": 3.1728, "tstat": -0.428, "pvalue": 0.6688, "ci_lower": -7.577, "ci_upper": 4.860, "vif": null },
+        { "feature": "Intercept (\u03b2\u2080)", "coef": -1.3583, "stderr": 3.1728, "tstat": -0.428, "pvalue": 0.6688, "ci_lower": -7.577, "ci_upper": 4.860, "vif": null },
         { "feature": "lstat", "coef": -0.6424, "stderr": 0.0437, "tstat": -14.689, "pvalue": 1e-15, "ci_lower": -0.728, "ci_upper": -0.556, "vif": 1.60 },
         { "feature": "rm", "coef": 5.0948, "stderr": 0.4445, "tstat": 11.462, "pvalue": 1e-15, "ci_lower": 4.223, "ci_upper": 5.966, "vif": 1.60 }
       ],
@@ -3777,7 +3777,7 @@ window.MODEL_DATA_BOSTON = {
       "f_stat": 353.1,
       "f_pvalue": 4.1e-123,
       "coefficients": [
-        { "feature": "Intercept (帣?)", "coef": 18.5671, "stderr": 3.9142, "tstat": 4.744, "pvalue": 2.7e-6, "ci_lower": 10.895, "ci_upper": 26.239, "vif": null },
+        { "feature": "Intercept (\u03b2\u2080)", "coef": 18.5671, "stderr": 3.9142, "tstat": 4.744, "pvalue": 2.7e-6, "ci_lower": 10.895, "ci_upper": 26.239, "vif": null },
         { "feature": "lstat", "coef": -0.5718, "stderr": 0.0422, "tstat": -13.541, "pvalue": 1e-15, "ci_lower": -0.655, "ci_upper": -0.489, "vif": 1.67 },
         { "feature": "rm", "coef": 4.5152, "stderr": 0.4261, "tstat": 10.597, "pvalue": 1e-15, "ci_lower": 3.680, "ci_upper": 5.350, "vif": 1.69 },
         { "feature": "ptratio", "coef": -0.9380, "stderr": 0.1187, "tstat": -7.904, "pvalue": 1.6e-14, "ci_lower": -1.171, "ci_upper": -0.705, "vif": 1.07 }
@@ -3805,7 +3805,7 @@ window.MODEL_DATA_BOSTON = {
       "f_stat": 279.2,
       "f_pvalue": 8.2e-127,
       "coefficients": [
-        { "feature": "Intercept (帣?)", "coef": 22.0968, "stderr": 4.0215, "tstat": 5.495, "pvalue": 6.1e-8, "ci_lower": 14.215, "ci_upper": 29.978, "vif": null },
+        { "feature": "Intercept (\u03b2\u2080)", "coef": 22.0968, "stderr": 4.0215, "tstat": 5.495, "pvalue": 6.1e-8, "ci_lower": 14.215, "ci_upper": 29.978, "vif": null },
         { "feature": "lstat", "coef": -0.5971, "stderr": 0.0425, "tstat": -14.049, "pvalue": 1e-15, "ci_lower": -0.680, "ci_upper": -0.514, "vif": 1.82 },
         { "feature": "rm", "coef": 4.4388, "stderr": 0.4201, "tstat": 10.566, "pvalue": 1e-15, "ci_lower": 3.615, "ci_upper": 5.262, "vif": 1.71 },
         { "feature": "ptratio", "coef": -0.9875, "stderr": 0.1182, "tstat": -8.354, "pvalue": 4.2e-16, "ci_lower": -1.219, "ci_upper": -0.756, "vif": 1.12 },
@@ -3834,7 +3834,7 @@ window.MODEL_DATA_BOSTON = {
       "f_stat": 243.5,
       "f_pvalue": 3.4e-131,
       "coefficients": [
-        { "feature": "Intercept (帣?)", "coef": 31.4285, "stderr": 4.5821, "tstat": 6.859, "pvalue": 2.1e-11, "ci_lower": 22.447, "ci_upper": 40.410, "vif": null },
+        { "feature": "Intercept (\u03b2\u2080)", "coef": 31.4285, "stderr": 4.5821, "tstat": 6.859, "pvalue": 2.1e-11, "ci_lower": 22.447, "ci_upper": 40.410, "vif": null },
         { "feature": "lstat", "coef": -0.5621, "stderr": 0.0421, "tstat": -13.351, "pvalue": 1e-15, "ci_lower": -0.645, "ci_upper": -0.479, "vif": 1.94 },
         { "feature": "rm", "coef": 4.1205, "stderr": 0.4182, "tstat": 9.853, "pvalue": 1e-15, "ci_lower": 3.301, "ci_upper": 4.940, "vif": 1.81 },
         { "feature": "ptratio", "coef": -0.9124, "stderr": 0.1165, "tstat": -7.832, "pvalue": 2.7e-14, "ci_lower": -1.141, "ci_upper": -0.684, "vif": 1.18 },

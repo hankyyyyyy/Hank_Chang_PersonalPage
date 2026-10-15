@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -942,17 +942,17 @@
       </div>
       <div class="header-actions">
         <!-- Bonus 1: Problem Selection Dropdown -->
-        <div class="problem-select-box" title="????1: 銝?閬???拍車 Problem">
-          <label for="problemSelect"><i class="fa-solid fa-cube"></i> Problem:</label>
+        <div class="problem-select-box" title="加分項 1: 下拉視窗呈現兩種 Problem">
+          <label for="problemSelect"><i class="fa-solid fa-cube"></i> PROBLEM:</label>
           <select id="problemSelect">
-            <option value="50_startups" selected>? 50 Startups (Profit)</option>
-            <option value="boston_housing">? Boston Housing (MEDV)</option>
+            <option value="50_startups" selected>Problem 1: 50 Startups (Profit)</option>
+            <option value="boston_housing">Problem 2: Boston Housing (MEDV)</option>
           </select>
         </div>
 
         <!-- Bonus 2: Custom Dataset Panel Toggle Button -->
         <button id="toggleDatasetBtn" class="ref-btn" style="cursor: pointer; background: var(--primary-subtle); color: var(--primary-dark); border-color: var(--primary-light);">
-          <i class="fa-solid fa-cloud-arrow-down"></i> ?芾? Dataset (????
+          <i class="fa-solid fa-cloud-arrow-down"></i> 自訂 Dataset (加分項)
         </button>
 
         <a href="https://statsunlock.com/multiple-linear-regression-calculator/" target="_blank" class="ref-btn">
@@ -970,35 +970,37 @@
       <div class="panel-header">
         <div class="panel-title">
           <i class="fa-solid fa-database" style="color: var(--primary);"></i>
-          <span>????2: ?臭遙?撓??Dataset (?舀 CSV URL ?璈???</span>
+          <span>加分項 2: 可任意輸入 Dataset (支援 CSV URL 或本機上傳)</span>
           <span class="badge-tag badge-green">In-Browser ML Engine</span>
         </div>
         <div id="datasetLoadStatus" style="font-size: 12.5px; color: var(--slate-500);">
-          頛詨隞餅? CSV 蝬脣??唾??蝞?OLS 餈湔飛??5 憭抒敺菟??        </div>
+          輸入任意 CSV 網址即自動計算 OLS 迴歸與 5 大特徵選取
+        </div>
       </div>
 
       <div class="url-input-group">
         <input type="text" id="datasetUrlInput" class="url-input" 
-               placeholder="頛詨 Raw CSV 蝬脣? (憒?https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv)"
+               placeholder="輸入 Raw CSV 網址 (如 https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv)"
                value="https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv">
         <button id="btnRunUrlTrain" class="btn-train">
-          <i class="fa-solid fa-bolt"></i> 頛銝血??蝺?        </button>
+          <i class="fa-solid fa-bolt"></i> 載入並即時訓練
+        </button>
         <button id="btnBrowseCsv" class="btn-upload">
-          <i class="fa-solid fa-upload"></i> 銝?祆? CSV
+          <i class="fa-solid fa-upload"></i> 上傳本機 CSV
         </button>
         <input type="file" id="localCsvFile" accept=".csv" style="display: none;">
       </div>
 
       <div class="preset-chips-row">
-        <span><i class="fa-solid fa-wand-magic-sparkles"></i> 敹恍?靘???:</span>
+        <span><i class="fa-solid fa-wand-magic-sparkles"></i> 快速範例資料集:</span>
         <button type="button" class="chip-btn" data-url="https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv">
-          ?? 50 Startups
+          50 Startups
         </button>
         <button type="button" class="chip-btn" data-url="https://raw.githubusercontent.com/selva86/datasets/master/BostonHousing.csv">
-          ? Boston Housing
+          Boston Housing
         </button>
         <button type="button" class="chip-btn" data-url="https://raw.githubusercontent.com/selva86/datasets/master/Advertising.csv">
-          ? Advertising Sales
+          Advertising Sales
         </button>
       </div>
     </div>
@@ -1007,13 +1009,13 @@
     <div class="hero-card">
       <h2 id="heroTitle">Feature Selection & Parsimony Analysis</h2>
       <p id="heroDesc">
-        Compare 5 Machine Learning Feature Selection Algorithms (<strong>Lasso</strong>, <strong>Forward SFS</strong>, <strong>RFE</strong>, <strong>ElasticNet</strong>, <strong>Exhaustive Search</strong>) against Baseline OLS. Explore the bias-variance tradeoff across feature counts =1 \dots 5$, pinpointing the <strong>2-feature optimal sweet spot</strong> and the <strong>5-feature overfitting cliff</strong>.
+        Compare 5 Machine Learning Feature Selection Algorithms (<strong>Lasso</strong>, <strong>Forward SFS</strong>, <strong>RFE</strong>, <strong>ElasticNet</strong>, <strong>Exhaustive Search</strong>) against Baseline OLS. Explore the bias-variance tradeoff across feature counts $k=1 \dots 5$, pinpointing the <strong>2-feature optimal sweet spot</strong> and the <strong>5-feature overfitting cliff</strong>.
       </p>
       <div class="hero-tags">
         <span class="hero-pill" id="heroPillDataset"><i class="fa-solid fa-database"></i> 50 Startups Dataset</span>
         <span class="hero-pill"><i class="fa-solid fa-bolt"></i> 5 Selection Methods</span>
-        <span class="hero-pill" id="heroPillSweet"><i class="fa-solid fa-star" style="color: #34d399;"></i> Global Sweet Spot: k=2 (,198.80 RMSE)</span>
-        <span class="hero-pill" id="heroPillOverfit"><i class="fa-solid fa-triangle-exclamation" style="color: #fbbf24;"></i> Overfitting Warning: k=5 (,137.99 RMSE)</span>
+        <span class="hero-pill" id="heroPillSweet"><i class="fa-solid fa-star" style="color: #34d399;"></i> Global Sweet Spot: k=2 ($8,198.80 RMSE)</span>
+        <span class="hero-pill" id="heroPillOverfit"><i class="fa-solid fa-triangle-exclamation" style="color: #fbbf24;"></i> Overfitting Warning: k=5 ($9,137.99 RMSE)</span>
       </div>
     </div>
 
@@ -1042,7 +1044,7 @@
           <span class="badge-pill">Best Subset</span>
         </button>
         <button class="tab-btn" data-algo="ALL" style="border-left: 2px solid var(--primary);">
-          <i class="fa-solid fa-layer-group"></i> ?? Compare All 5 Methods
+          <i class="fa-solid fa-layer-group"></i> 🌟 Compare All 5 Methods
         </button>
       </div>
 
@@ -1059,7 +1061,7 @@
           <span>Test RMSE</span>
           <span class="badge-tag badge-green" id="rmseBadge"><i class="fa-solid fa-award"></i> Optimal</span>
         </div>
-        <div class="metric-val" id="valRMSE">,198.80</div>
+        <div class="metric-val" id="valRMSE">$8,198.80</div>
         <div class="metric-note">
           <span>Lower is better (Best across methods)</span>
         </div>
@@ -1067,7 +1069,7 @@
 
       <div class="metric-card sweet">
         <div class="metric-title">
-          <span>R簡 Score</span>
+          <span>R<sup>2</sup> Score</span>
           <span class="badge-tag badge-blue" id="r2Badge"><i class="fa-solid fa-circle-check"></i> 94.7% Fit</span>
         </div>
         <div class="metric-val" id="valR2">0.9474</div>
@@ -1078,7 +1080,7 @@
 
       <div class="metric-card">
         <div class="metric-title">
-          <span>Adjusted R簡</span>
+          <span>Adjusted R<sup>2</sup></span>
           <i class="fa-solid fa-scale-balanced" style="color: var(--slate-400);"></i>
         </div>
         <div class="metric-val" id="valAdjR2">0.9324</div>
@@ -1092,7 +1094,7 @@
           <span>Mean Absolute Error</span>
           <i class="fa-solid fa-calculator" style="color: var(--slate-400);"></i>
         </div>
-        <div class="metric-val" id="valMAE">,488.75</div>
+        <div class="metric-val" id="valMAE">$6,488.75</div>
         <div class="metric-note">
           <span>Average prediction error ($)</span>
         </div>
@@ -1163,7 +1165,7 @@
         <i class="fa-solid fa-square-root-variable"></i> Fitted OLS Regression Equation
       </div>
       <div class="equation-formula" id="equationBox">
-        Profit = 44,050.85 + 0.825 ? (R&D Spend) + 0.024 ? (Marketing Spend)
+        Profit = 44,050.85 + 0.825 × (R&D Spend) + 0.024 × (Marketing Spend)
       </div>
     </div>
 
@@ -1183,7 +1185,7 @@
             <thead>
               <tr>
                 <th>Predictor</th>
-                <th>Estimate (帣)</th>
+                <th>Estimate (&beta;)</th>
                 <th>Std. Error</th>
                 <th>t-Stat</th>
                 <th>p-Value</th>
@@ -1216,9 +1218,9 @@
           <!-- Output Box -->
           <div class="prediction-output-box">
             <div class="pred-label" id="predOutputLabel">Predicted Startup Profit</div>
-            <div class="pred-value" id="predProfitOutput">,154.20</div>
+            <div class="pred-value" id="predProfitOutput">$130,154.20</div>
             <div class="pred-formula-note" id="predFormulaNote">
-              Calculated using: 帣? + 帣??R&D) + 帣??Marketing)
+              Calculated using: &beta;<sub>0</sub> + &beta;<sub>1</sub>(R&D) + &beta;<sub>2</sub>(Marketing)
             </div>
           </div>
         </div>
@@ -1301,9 +1303,9 @@
         toggleBtn.addEventListener('click', () => {
           panel.classList.toggle('open');
           if (panel.classList.contains('open')) {
-            toggleBtn.innerHTML = '<i class="fa-solid fa-chevron-up"></i> ?嗅??芾? Dataset';
+            toggleBtn.innerHTML = '<i class="fa-solid fa-chevron-up"></i> 收合自訂 Dataset';
           } else {
-            toggleBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> ?芾? Dataset (????';
+            toggleBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> 自訂 Dataset (加分項)';
           }
         });
       }
@@ -1330,12 +1332,12 @@
                   opt.value = 'custom_dataset';
                   sel.appendChild(opt);
                 }
-                opt.textContent = '?? ' + file.name;
+                opt.textContent = 'Custom: ' + file.name;
                 sel.value = 'custom_dataset';
                 window.AppML.applyProblemChange('custom_dataset');
-                document.getElementById('datasetLoadStatus').innerHTML = '<span style="color: #059669; font-weight: 600;">???祆?瑼? ' + file.name + ' ??摰?嚗?/span>';
+                document.getElementById('datasetLoadStatus').innerHTML = '<span style="color: #059669; font-weight: 600;">✓ 本機檔案 ' + file.name + ' 分析完成！</span>';
               } catch (err) {
-                alert('閫??憭望?: ' + err.message);
+                alert('解析失敗: ' + err.message);
               }
             };
             reader.readAsText(file);
