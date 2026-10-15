@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiple Linear Regression & Feature Selection Explorer (50 Startups & Boston Housing)</title>
+  <meta name="description" content="CRISP-DM Multiple Linear Regression and Feature Selection Explorer comparing 5 algorithms (Lasso, Forward SFS, RFE, ElasticNet, Exhaustive Search) across 50 Startups and Boston Housing datasets with real-time prediction and custom dataset analysis.">
+  
+  <!-- Google Fonts: Outfit, Inter, Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 6 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js 4 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Pre-computed Models and Data -->
+  <script src="model_data.js"></script>
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ==========================================
+       TOP NAVIGATION & BREADCRUMBS
+       ========================================== -->
+  <header class="top-header">
+    <div class="header-inner">
+      <div class="header-title-group">
+        <div class="breadcrumbs">
+          <a href="../index.html"><i class="fa-solid fa-house"></i> Home</a>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+          <span>Regression Analysis</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+          <span id="breadcrumb-problem" class="font-semibold text-slate-800">50 Startups Feature Progression</span>
+        </div>
+        <h1 id="main-title">
+          <i class="fa-solid fa-chart-line text-primary"></i> 50 Startups Multiple Linear Regression Explorer
+          <span class="brand-badge">CRISP-DM</span>
+        </h1>
+      </div>
+
+      <!-- Action items & Problem Switcher (Bonus +1 Point) -->
+      <div class="header-actions">
+        <div class="problem-select-box" title="Switch between Problem 1 (50 Startups), Problem 2 (Boston Housing), or Custom Dataset">
+          <label for="problem-select" class="problem-select-label">
+            <i class="fa-solid fa-shuffle"></i> Select Problem:
+          </label>
+          <select id="problem-select" class="problem-dropdown" aria-label="Select Dataset Problem">
+            <option value="50startups" selected>🏢 Problem 1: 50 Startups (Profit)</option>
+            <option value="boston">🏡 Problem 2: Boston Housing (MEDV)</option>
+            <option value="custom">🌐 Custom Dataset (URL / File)</option>
+          </select>
+          <span class="bonus-pill-tag">+1 pt Dropdown</span>
+        </div>
+
+        <a href="https://statsunlock.com" target="_blank" rel="noopener" class="ref-btn" title="StatsUnlock style reference">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Style Ref: StatsUnlock
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       MAIN CONTAINER
+       ========================================== -->
+  <main class="container">
+
+    <!-- ==========================================
+         CUSTOM DATASET BAR (Bonus +2 Points)
+         ========================================== -->
+    <section class="custom-dataset-bar" id="custom-dataset-bar" style="display: none;">
+      <div class="custom-dataset-header">
+        <div class="custom-dataset-title">
+          <i class="fa-solid fa-cloud-arrow-down text-primary"></i>
+          <span>Dynamic Custom Dataset Analyzer <span class="bonus-pill-tag">+2 pt Custom Dataset</span></span>
+        </div>
+        <div class="custom-presets">
+          <span class="custom-preset-label">Quick Presets:</span>
+          <button type="button" class="preset-btn" data-url="https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv">50 Startups CSV</button>
+          <button type="button" class="preset-btn" data-url="https://raw.githubusercontent.com/selva86/datasets/master/BostonHousing.csv">Boston Housing CSV</button>
+          <button type="button" class="preset-btn" data-url="https://raw.githubusercontent.com/selva86/datasets/master/Advertising.csv">Advertising CSV</button>
+        </div>
+      </div>
+
+      <div class="custom-input-row">
+        <input type="url" id="custom-csv-url" class="custom-url-input" placeholder="Enter CSV URL (e.g. https://raw.githubusercontent.com/.../dataset.csv)" value="https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv">
+        <button type="button" id="btn-load-custom-url" class="btn-primary">
+          <i class="fa-solid fa-bolt"></i> Load & Analyze
+        </button>
+        
+        <label for="custom-csv-file" class="file-upload-label" title="Upload CSV from local machine">
+          <i class="fa-solid fa-upload"></i> Upload CSV
+          <input type="file" id="custom-csv-file" accept=".csv" style="display: none;">
+        </label>
+      </div>
+      <div id="custom-status-msg" class="custom-status-msg">
+        <i class="fa-solid fa-info-circle text-primary"></i> Enter any raw CSV dataset URL or upload a local CSV file. The browser will parse features and fit OLS models in real-time.
+      </div>
+    </section>
+
+    <!-- ==========================================
+         HERO CARD BANNER
+         ========================================== -->
+    <section class="hero-card">
+      <h2 id="hero-title">Feature Selection & Parsimony Analysis</h2>
+      <p id="hero-desc">
+        Compare 5 Machine Learning Feature Selection Algorithms (Lasso, Forward SFS, RFE, ElasticNet, Exhaustive Search) against Baseline OLS. Explore the bias-variance tradeoff across feature counts k=1...5, pinpointing the 2-feature optimal sweet spot and the 5-feature overfitting cliff.
+      </p>
+      
+      <div class="hero-tags">
+        <span class="hero-pill" id="pill-dataset"><i class="fa-solid fa-database"></i> 50 Startups Dataset</span>
+        <span class="hero-pill"><i class="fa-solid fa-microchip"></i> 5 Selection Methods</span>
+        <span class="hero-pill text-emerald-300 font-semibold" id="pill-sweet-spot"><i class="fa-solid fa-star"></i> Global Sweet Spot: k=2 ($8,198.80 RMSE)</span>
+        <span class="hero-pill text-amber-300" id="pill-overfitting"><i class="fa-solid fa-triangle-exclamation"></i> Overfitting Warning: k=5 ($9,137.99 RMSE)</span>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         CONTROLS: ALGORITHM & K SELECTION
+         ========================================== -->
+    <section class="controls-wrapper">
+      <!-- 1. Feature Selection Algorithm Selection -->
+      <label class="control-label">
+        <i class="fa-solid fa-layer-group"></i> 1. Select Feature Selection Algorithm
+      </label>
+      <div class="tabs-pills" id="algo-tabs-container">
+        <!-- Rendered by app.js -->
+      </div>
+
+      <!-- Compare All Methods Action Button -->
+      <div style="margin-bottom: 20px;">
+        <button type="button" id="btn-compare-all" class="tab-btn compare-tab">
+          <i class="fa-solid fa-code-compare text-amber-500"></i> Compare All 5 Methods <span class="badge-pill">Overlay View</span>
+        </button>
+      </div>
+
+      <!-- 2. Feature Progression (K = 1 to 5) -->
+      <label class="control-label">
+        <i class="fa-solid fa-sliders"></i> 2. Number of Features (k = 1 to 5)
+      </label>
+      <div class="k-selector-group" id="k-selector-container">
+        <!-- Rendered by app.js -->
+      </div>
+    </section>
+
+    <!-- ==========================================
+         METRICS GRID (5 CARDS)
+         ========================================== -->
+    <section class="metrics-grid">
+      <!-- Card 1: Test RMSE -->
+      <div class="metric-card sweet">
+        <div class="metric-title">
+          <span>Test RMSE</span>
+          <span class="metric-tag sweet" id="tag-test-rmse"><i class="fa-solid fa-award"></i> Optimal Sweet Spot</span>
+        </div>
+        <div class="metric-val" id="val-test-rmse">$8,198.80</div>
+        <div class="metric-note">Lower is better (Best across methods)</div>
+      </div>
+
+      <!-- Card 2: R2 Score -->
+      <div class="metric-card">
+        <div class="metric-title">
+          <span>R² Score</span>
+          <span class="metric-tag normal" id="tag-r2-score">94.7% Fit</span>
+        </div>
+        <div class="metric-val" id="val-r2-score">0.9474</div>
+        <div class="metric-note">Explains profit variance</div>
+      </div>
+
+      <!-- Card 3: Adjusted R2 -->
+      <div class="metric-card">
+        <div class="metric-title">
+          <span>Adjusted R²</span>
+          <i class="fa-solid fa-scale-balanced text-slate-400"></i>
+        </div>
+        <div class="metric-val" id="val-adj-r2">0.9324</div>
+        <div class="metric-note">Penalizes redundant parameters</div>
+      </div>
+
+      <!-- Card 4: Mean Absolute Error -->
+      <div class="metric-card">
+        <div class="metric-title">
+          <span>Mean Absolute Error</span>
+          <i class="fa-solid fa-calculator text-slate-400"></i>
+        </div>
+        <div class="metric-val" id="val-mae">$6,886.59</div>
+        <div class="metric-note">Average test prediction error</div>
+      </div>
+
+      <!-- Card 5: F-Statistic -->
+      <div class="metric-card">
+        <div class="metric-title">
+          <span>F-Statistic</span>
+          <span class="badge-pill badge-sig-green">p &lt; 0.0001</span>
+        </div>
+        <div class="metric-val" id="val-f-stat">349.0</div>
+        <div class="metric-note">Model is statistically significant</div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         ACTIVE PREDICTORS & OCCAM'S RAZOR NOTE
+         ========================================== -->
+    <section class="predictors-bar">
+      <div class="active-predictors-box" id="active-predictors-container">
+        <!-- Rendered by app.js -->
+      </div>
+      <div class="occam-razor-box" id="occam-razor-note">
+        <!-- Rendered by app.js -->
+      </div>
+    </section>
+
+    <!-- ==========================================
+         DUAL CHARTS (RMSE & R-SQUARED)
+         ========================================== -->
+    <section class="charts-grid">
+      <!-- Chart 1: RMSE by k -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">
+            <i class="fa-solid fa-chart-line text-primary"></i> RMSE by Number of Features
+          </div>
+          <span class="badge-pill bg-slate-100 text-slate-700 font-semibold" id="badge-chart-method">Validation</span>
+        </div>
+        <div class="chart-subtitle">
+          Lower is better. Sharp valley at k=2, jump at k=5.
+        </div>
+        <div class="chart-canvas-wrapper">
+          <canvas id="chart-rmse"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: R-squared by k -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">
+            <i class="fa-solid fa-arrow-trend-up text-emerald-600"></i> R-squared by Number of Features
+          </div>
+          <span class="badge-pill badge-sig-green">Peak Fit</span>
+        </div>
+        <div class="chart-subtitle">
+          Higher is better. Peaks at optimal k, drops when overfitting occurs.
+        </div>
+        <div class="chart-canvas-wrapper">
+          <canvas id="chart-r2"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         FITTED OLS REGRESSION EQUATION
+         ========================================== -->
+    <section class="equation-card">
+      <div class="equation-label">
+        <i class="fa-solid fa-square-root-variable"></i> Fitted OLS Regression Equation
+      </div>
+      <div class="equation-display" id="equation-formula">
+        <!-- Rendered by app.js -->
+      </div>
+    </section>
+
+    <!-- ==========================================
+         DETAILS GRID: COEFFICIENTS & LIVE PREDICTOR
+         ========================================== -->
+    <section class="details-grid">
+      <!-- Left: Coefficients & Statistical Tests -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3><i class="fa-solid fa-table-list text-primary"></i> Model Coefficients & Statistical Tests</h3>
+            <p class="card-subtitle">Detailed parameter estimates, standard errors, t-statistics, and VIF multicollinearity.</p>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Predictor</th>
+                <th>Estimate (B)</th>
+                <th>Std. Error</th>
+                <th>t-Stat</th>
+                <th>p-Value</th>
+                <th>95% Conf. Int</th>
+                <th>VIF</th>
+              </tr>
+            </thead>
+            <tbody id="coefficients-tbody">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right: Live Profit / Price Predictor -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3 id="predictor-title"><i class="fa-solid fa-calculator text-emerald-600"></i> Live Predictor</h3>
+            <p class="card-subtitle" id="predictor-desc">Test predictions in real-time with the active model.</p>
+          </div>
+          <span class="badge-pill badge-sig-green"><i class="fa-solid fa-bolt"></i> Real-time</span>
+        </div>
+
+        <div class="predictor-inputs-box" id="predictor-inputs-container">
+          <!-- Dynamic sliders & inputs rendered by app.js -->
+        </div>
+
+        <div class="predictor-result-card">
+          <div class="predictor-output-subtitle" id="predictor-output-title">PREDICTED STARTUP PROFIT</div>
+          <div class="predictor-output-value" id="predictor-result">$130,094.66</div>
+          <div class="predictor-breakdown-text" id="predictor-breakdown">
+            Active predictors: R&D Spend, Marketing Spend (R&D: +$78,862 | Marketing: +$4,886)
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         TOP OUTLIERS & RESIDUALS TABLE
+         ========================================== -->
+    <section class="card outliers-section">
+      <div class="card-header">
+        <div class="card-title-group">
+          <h3><i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Residual Diagnostics & Top Outliers</h3>
+          <p class="card-subtitle">Top 10 observations with highest absolute prediction residuals.</p>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Entity</th>
+              <th>Actual</th>
+              <th>Predicted</th>
+              <th>Residual</th>
+              <th>Absolute Error</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="outliers-tbody">
+            <!-- Rendered by app.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         FOOTER: METHODOLOGY & REFERENCES
+         ========================================== -->
+    <footer class="footer-card">
+      <div class="footer-left">
+        <div class="footer-brand">
+          <i class="fa-solid fa-graduation-cap text-primary"></i>
+          <span>DIC-2 CRISP-DM Machine Learning Project</span>
+        </div>
+        <p class="footer-desc">
+          Developed for multiple linear regression model selection, parsimony validation, and statistical inference. Built with pure Vanilla HTML, CSS, JavaScript, and Chart.js.
+        </p>
+        <p class="footer-desc" style="margin-top: 8px;">
+          Author: <strong>Hank Chang (張佑維)</strong> | 電機工程學系 | 國立中興大學 NCHU
+        </p>
+      </div>
+
+      <div class="footer-right">
+        <div class="footer-right-title">References & Acknowledgments</div>
+        <p><strong>Design & Layout Reference:</strong> Statistical calculator style inspired by <a href="https://statsunlock.com" target="_blank" rel="noopener">StatsUnlock Multiple Linear Regression Calculator</a> (featuring ANOVA, coefficients, VIF, and APA reporting aesthetics).</p>
+        <p style="margin-top: 4px;"><strong>Datasets:</strong> 50 Startups Dataset (Avik Jain 100-Days-Of-ML) &amp; Boston Housing Dataset (Harrison &amp; Rubinfeld).</p>
+        <p style="margin-top: 4px;"><strong>Methodology:</strong> CRISP-DM (Cross-Industry Standard Process for Data Mining).</p>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
