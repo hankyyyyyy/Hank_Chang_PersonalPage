@@ -6,14 +6,22 @@ echo   專案包含：50 Startups + Boston Housing + 自訂 Dataset 分析引擎
 echo ===================================================================
 cd /d "%~dp0"
 
-git add .
-git commit -m "feat: complete DIC-2 50 Startups & Boston Housing with custom dataset analyzer"
-git push origin main
+set GIT_CMD=git
+where git >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    if exist "C:\Users\user\.gemini\antigravity-ide\scratch\mingit\cmd\git.exe" (
+        set GIT_CMD="C:\Users\user\.gemini\antigravity-ide\scratch\mingit\cmd\git.exe"
+    )
+)
+
+%GIT_CMD% add .
+%GIT_CMD% commit -m "feat: complete DIC-2 50 Startups & Boston Housing with custom dataset analyzer"
+%GIT_CMD% push origin main
 
 echo.
 if %ERRORLEVEL% equ 0 (
     echo ✅ [成功] 專案已順利推送到 GitHub！
-    echo 請至倉庫 Settings -> Pages 確認部署狀態。
+    echo 請至倉庫 Settings -^> Pages 確認部署狀態。
 ) else (
     echo ℹ️ 若第一次推送到獨立倉庫，請確認 remote origin 網址設定正確。
 )
