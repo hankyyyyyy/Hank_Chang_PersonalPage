@@ -14,14 +14,22 @@ if %ERRORLEVEL% neq 0 (
     )
 )
 
+set REPO_URL=https://github.com/hankyyyyyy/DIC-2-kaggle-50-startup-and-boston-housing-.git
+
+if not exist ".git" (
+    %GIT_CMD% init -b main
+    %GIT_CMD% remote add origin %REPO_URL%
+)
+
 %GIT_CMD% add .
 %GIT_CMD% commit -m "feat: complete DIC-2 50 Startups & Boston Housing with custom dataset analyzer"
-%GIT_CMD% push origin main
+%GIT_CMD% push -u %REPO_URL% main
 
 echo.
 if %ERRORLEVEL% equ 0 (
-    echo ✅ [成功] 專案已順利推送到 GitHub！
-    echo 請至倉庫 Settings -^> Pages 確認部署狀態。
+    echo ✅ [成功] 專案已順利推送到 GitHub (DIC-2-kaggle-50-startup-and-boston-housing-)！
+    echo 專案公開網址: https://github.com/hankyyyyyy/DIC-2-kaggle-50-startup-and-boston-housing-
+    echo GitHub Pages: https://hankyyyyyy.github.io/DIC-2-kaggle-50-startup-and-boston-housing-/
 ) else (
     echo ℹ️ 若第一次推送到獨立倉庫，請確認 remote origin 網址設定正確。
 )
